@@ -12,8 +12,11 @@
 
 defined('ABSPATH') or die('Hey, What are you doing here? You Silly Man!');
 
-define('PLUGIN_DIR_PATH', plugin_dir_path( __FILE__));
-define('PLUGIN_DIR_URL', plugin_dir_url( __FILE__));
+
+define('WPPM_PLUGIN_DIR_PATH', plugin_dir_path( __FILE__));
+define('WPPM_PLUGIN_DIR_URL', plugin_dir_url( __FILE__));
 
 // Include custom post types
-require_once plugin_dir_path(__FILE__) . 'inc/cpt.php';
+require_once WPPM_PLUGIN_DIR_PATH . 'inc/cpt.php';
+require_once WPPM_PLUGIN_DIR_PATH . 'meta_box/meta_boxes.php';
+require_once WPPM_PLUGIN_DIR_PATH . 'inc/custom_menu.php';
