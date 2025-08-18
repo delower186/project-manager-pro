@@ -336,3 +336,12 @@ function wppm_task_filter_query($query) {
     }
 }
 add_action('pre_get_posts', 'wppm_task_filter_query');
+
+// Remove Comments column from Project CPT list table
+function wppm_remove_task_comments_column($columns) {
+    if (isset($columns['comments'])) {
+        unset($columns['comments']);
+    }
+    return $columns;
+}
+add_filter('manage_wppm_task_posts_columns', 'wppm_remove_task_comments_column');

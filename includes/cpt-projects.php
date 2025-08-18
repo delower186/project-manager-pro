@@ -300,3 +300,11 @@ function wppm_countdown_assets($hook) {
 }
 add_action('admin_enqueue_scripts', 'wppm_countdown_assets');
 
+// Remove Comments column from Project CPT list table
+function wppm_remove_project_comments_column($columns) {
+    if (isset($columns['comments'])) {
+        unset($columns['comments']);
+    }
+    return $columns;
+}
+add_filter('manage_wppm_project_posts_columns', 'wppm_remove_project_comments_column');
