@@ -97,6 +97,7 @@ function wppm_dashboard_page() {
                 <thead>
                     <tr style="background:#0073aa; color:#fff; text-align:left;">
                         <th style="padding:10px; border:1px solid #ddd;">Project</th>
+                        <th style="padding:10px; border:1px solid #ddd;">Manager</th>
                         <th style="padding:10px; border:1px solid #ddd;">Status</th>
                         <th style="padding:10px; border:1px solid #ddd;">Priority</th>
                         <th style="padding:10px; border:1px solid #ddd;">Progress</th>
@@ -152,12 +153,19 @@ function wppm_dashboard_page() {
                             $due_date = get_post_meta($proj_id,'_wppm_project_due_date',true);
                             $proj_status = get_post_meta($proj_id,'_wppm_project_status',true);
                             $proj_priority = get_post_meta($proj_id,'_wppm_project_priority',true);
+
+                            // Project Manager
+                            $proj_manager_id = get_post_meta($proj_id,'_wppm_project_assigned',true);
+                            $proj_manager = $proj_manager_id ? get_userdata($proj_manager_id) : null;
                     ?>
                             <tr style="background:#f9f9f9;">
                                 <td style="padding:10px; border:1px solid #ddd;">
                                     <strong><?php the_title(); ?></strong>
                                     <!-- Completed / Total tasks counter -->
                                     <span style="font-size:12px; color:#555; margin-left:8px;">(<?php echo $completed.' / '.$total; ?>)</span>
+                                </td>
+                                <td style="padding:10px; border:1px solid #ddd;">
+                                    <?php echo $proj_manager ? esc_html($proj_manager->display_name) : '—'; ?>
                                 </td>
                                 <td style="padding:10px; border:1px solid #ddd;">
                                     <span class="wppm-badge wppm-status-<?php echo esc_attr($proj_status); ?>"><?php echo ucfirst($proj_status); ?></span>
@@ -191,7 +199,7 @@ function wppm_dashboard_page() {
                             ]);
                             if($all_tasks->have_posts()): ?>
                                 <tr>
-                                    <td colspan="6" style="padding:0; background:#f4f4f4;">
+                                    <td colspan="7" style="padding:0; background:#f4f4f4;">
                                         <table style="width:95%; margin:10px 20px; border-collapse:collapse; font-size:14px;">
                                             <thead>
                                                 <tr style="background:#0073aa; color:#fff;">
@@ -238,7 +246,7 @@ function wppm_dashboard_page() {
                     <?php wp_reset_postdata();
                         endwhile;
                     else:
-                        echo '<tr><td colspan="6" style="padding:8px;">No running projects found.</td></tr>';
+                        echo '<tr><td colspan="7" style="padding:8px;">No running projects found.</td></tr>';
                     endif; ?>
                 </tbody>
             </table>
