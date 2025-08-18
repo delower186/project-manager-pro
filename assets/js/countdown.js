@@ -1,11 +1,17 @@
 jQuery(document).ready(function($){
     function updateCountdown($elem) {
+        var status = $elem.data('status');
+        if(status === 'completed'){
+            $elem.text('✅ Completed').css('color','green');
+            return; // stop countdown
+        }
+
         var due = new Date($elem.data('due'));
         var now = new Date();
         var diff = due - now;
 
         if(diff <= 0){
-            $elem.text('Expired').css('color', 'red');
+            $elem.text('⏰ Expired').css('color', 'red');
             return;
         }
 
@@ -16,7 +22,6 @@ jQuery(document).ready(function($){
 
         $elem.text(days+'d '+hours+'h '+minutes+'m '+seconds+'s');
 
-        // Optional animation: color changes as time approaches
         var totalHours = diff / (1000*60*60);
         if(totalHours <= 24) $elem.css('color', 'orange');
         if(totalHours <= 1) $elem.css('color', 'red');
@@ -28,3 +33,4 @@ jQuery(document).ready(function($){
         setInterval(function(){ updateCountdown($this); }, 1000);
     });
 });
+

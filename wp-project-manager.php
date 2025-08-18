@@ -12,47 +12,22 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 define('WPPM_PLUGIN_DIR_PATH', plugin_dir_path( __FILE__));
 define('WPPM_PLUGIN_DIR_URL', plugin_dir_url( __FILE__));
 
+
+function wppm_dashboard_assets($hook) {
+    // Only load on WP Project Manager dashboard
+    if ($hook !== 'toplevel_page_wppm_dashboard') return;
+
+    // JS
+    wp_enqueue_script('wppm-dashboard-js', WPPM_PLUGIN_DIR_URL . 'assets/js/dashboard.js', ['jquery'], '1.0', true);
+
+    // CSS
+    wp_enqueue_style('wppm-dashboard-css', WPPM_PLUGIN_DIR_URL . 'assets/css/dashboard.css');
+}
+add_action('admin_enqueue_scripts', 'wppm_dashboard_assets');
+
+
 // Include CPTs
 require_once WPPM_PLUGIN_DIR_PATH . 'includes/cpt-projects.php';
 require_once WPPM_PLUGIN_DIR_PATH . 'includes/cpt-tasks.php';
+require_once WPPM_PLUGIN_DIR_PATH . 'includes/menu.php';
 
-// Admin Menu
-function wppm_admin_menu() {
-    add_menu_page(
-        'WP Project Manager',
-        'WP Project Manager',
-        'manage_options',
-        'wppm_main_menu',
-        '__return_null',
-        'dashicons-clipboard',
-        6
-    );
-
-    // Submenus
-    add_submenu_page(
-        'wppm_main_menu',
-        'Projects',
-        'Projects',
-        'manage_options',
-        'edit.php?post_type=wppm_project'
-    );
-
-    add_submenu_page(
-        'wppm_main_menu',
-        'Tasks',
-        'Tasks',
-        'manage_options',
-        'edit.php?post_type=wppm_task'
-    );
-}
-add_action('admin_menu', 'wppm_admin_menu');
-
-// Redirect parent menu to Projects
-function wppm_redirect_main_menu() {
-    global $pagenow;
-    if ($pagenow === 'admin.php' && isset($_GET['page']) && $_GET['page'] === 'wppm_main_menu') {
-        wp_safe_redirect(admin_url('edit.php?post_type=wppm_project'));
-        exit;
-    }
-}
-add_action('admin_init', 'wppm_redirect_main_menu');

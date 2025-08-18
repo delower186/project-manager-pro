@@ -2,16 +2,64 @@
 // Register Projects CPT
 function wppm_register_project_cpt() {
     $labels = [
-        'name' => 'Projects',
-        'singular_name' => 'Project',
+      'name' => __('Projects','wp-project-manager') ,
+      'singular_name' => __('Project','wp-project-manager') ,
+      'add_new'                  => __( 'Add New', 'wp-project-manager' ),
+      'add_new_item'             => __( 'Add New Project', 'wp-project-manager' ),
+      'edit_item'                => __( 'Edit Project', 'wp-project-manager' ),
+      'new_item'                 => __( 'New Project', 'wp-project-manager' ),
+      'view_item'                => __( 'View Project', 'wp-project-manager' ),
+      'view_items'               => __( 'View Projects', 'wp-project-manager' ),
+      'search_items'             => __( 'Search Projects', 'wp-project-manager' ),
+      'not_found'                => __( 'No Projects found.', 'wp-project-manager' ),
+      'not_found_in_trash'       => __( 'No Projects found in Trash.', 'wp-project-manager' ),
+      'parent_item_colon'        => __( 'Parent Projects:', 'wp-project-manager' ),
+      'all_items'                => __( 'All Projects', 'wp-project-manager' ),
+      'archives'                 => __( 'Project Archives', 'wp-project-manager' ),
+      'attributes'               => __( 'Project Attributes', 'wp-project-manager' ),
+      'insert_into_item'         => __( 'Insert into Project', 'wp-project-manager' ),
+      'uploaded_to_this_item'    => __( 'Uploaded to this Project', 'wp-project-manager' ),
+      'featured_image'           => __( 'Featured Image', 'wp-project-manager' ),
+      'set_featured_image'       => __( 'Set featured image', 'wp-project-manager' ),
+      'remove_featured_image'    => __( 'Remove featured image', 'wp-project-manager' ),
+      'use_featured_image'       => __( 'Use as featured image', 'wp-project-manager' ),
+      'menu_name'                => __( 'WP Project', 'wp-project-manager' ),
+      'filter_items_list'        => __( 'Filter Project list', 'wp-project-manager' ),
+      'filter_by_date'           => __( 'Filter by date', 'wp-project-manager' ),
+      'items_list_navigation'    => __( 'Projects list navigation', 'wp-project-manager' ),
+      'items_list'               => __( 'Projects list', 'wp-project-manager' ),
+      'item_published'           => __( 'Project published.', 'wp-project-manager' ),
+      'item_published_privately' => __( 'Project published privately.', 'wp-project-manager' ),
+      'item_reverted_to_draft'   => __( 'Project reverted to draft.', 'wp-project-manager' ),
+      'item_scheduled'           => __( 'Project scheduled.', 'wp-project-manager' ),
+      'item_updated'             => __( 'Project updated.', 'wp-project-manager' ),
+      'item_link'                => __( 'Project Link', 'wp-project-manager' ),
+      'item_link_description'    => __( 'A link to an Project.', 'wp-project-manager' ),
     ];
     $args = [
         'labels' => $labels,
-        'public' => false,
-        'show_ui' => true,
-        'menu_position' => 6,
-        'menu_icon' => 'dashicons-portfolio',
-        'supports' => ['title', 'editor'],
+        'description'           => __( 'organize and manage company Projects', 'wp-project-manager' ),
+        'public'                => false,
+        'hierarchical'          => false,
+        'exclude_from_search'   => true,
+        'publicly_queryable'    => false,
+        'show_ui'               => true,
+        'show_in_menu'          => false,
+        'show_in_nav_menus'     => false,
+        'show_in_admin_bar'     => false,
+        'show_in_rest'          => true,
+        'menu_position'         => 6,
+        'menu_icon'             => 'dashicons-portfolio',
+        'capability_type'       => 'post',
+        'capabilities'          => array(),
+        'supports'              => array( 'title', 'editor', 'revisions', 'author', 'comments' ),
+        'taxonomies'            => array(),
+        'has_archive'           => true,
+        'query_var'             => true,
+        'can_export'            => true,
+        'delete_with_user'      => false,
+        'template'              => array(),
+        'template_lock'         => false,
     ];
     register_post_type('wppm_project', $args);
 }
@@ -95,27 +143,47 @@ function wppm_project_columns($columns) {
 }
 add_filter('manage_wppm_project_posts_columns', 'wppm_project_columns');
 
-// Render column values for Projects
+// Render column values for Projects with color badges
 function wppm_project_column_content($column, $post_id) {
     switch ($column) {
         case 'status':
-            echo esc_html(get_post_meta($post_id, '_wppm_project_status', true));
+            $status = get_post_meta($post_id, '_wppm_project_status', true);
+            $color = 'gray';
+            if ($status === 'pending') $color = '#ff9800';
+            elseif ($status === 'in_progress') $color = '#2196f3';
+            elseif ($status === 'completed') $color = '#4caf50';
+            echo '<span style="display:inline-block;padding:2px 6px;border-radius:4px;background:' . esc_attr($color) . ';color:#fff;font-weight:bold;">' . ucfirst($status) . '</span>';
             break;
+
         case 'priority':
-            echo esc_html(get_post_meta($post_id, '_wppm_project_priority', true));
+            $priority = get_post_meta($post_id, '_wppm_project_priority', true);
+            $color = 'gray';
+            if ($priority === 'low') $color = '#4caf50';
+            elseif ($priority === 'medium') $color = '#ff9800';
+            elseif ($priority === 'high') $color = '#f44336';
+            echo '<span style="display:inline-block;padding:2px 6px;border-radius:4px;background:' . esc_attr($color) . ';color:#fff;font-weight:bold;">' . ucfirst($priority) . '</span>';
             break;
+
         case 'due_date':
             echo esc_html(get_post_meta($post_id, '_wppm_project_due_date', true));
             break;
+
         case 'assigned':
             $user_id = get_post_meta($post_id, '_wppm_project_assigned', true);
             $user    = $user_id ? get_userdata($user_id) : null;
             echo $user ? esc_html($user->display_name) : '—';
             break;
+
         case 'countdown':
             $due_date = get_post_meta($post_id, '_wppm_project_due_date', true);
+            $status   = get_post_meta($post_id,'_wppm_project_status',true);
+            $color = 'gray';
+            if ($status === 'pending') $color = '#ff9800';
+            elseif ($status === 'in_progress') $color = '#2196f3';
+            elseif ($status === 'completed') $color = '#4caf50';
+
             if ($due_date) {
-                echo '<span class="wppm-countdown" data-due="' . esc_attr($due_date) . '"></span>';
+                echo '<span class="wppm-countdown" data-due="' . esc_attr($due_date) . '" data-status="'.$status.'" style="display:inline-block;padding:2px 6px;border-radius:4px;background:' . esc_attr($color) . ';color:#fff;font-weight:bold;">&nbsp;</span>';
             } else {
                 echo '—';
             }
@@ -123,6 +191,7 @@ function wppm_project_column_content($column, $post_id) {
     }
 }
 add_action('manage_wppm_project_posts_custom_column', 'wppm_project_column_content', 10, 2);
+
 
 
 // Make Projects Columns Sortable
