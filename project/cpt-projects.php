@@ -75,18 +75,40 @@ function wppm_project_meta_callback($post) {
     $status    = get_post_meta($post->ID, '_wppm_project_status', true);
     $priority  = get_post_meta($post->ID, '_wppm_project_priority', true);
     $due_date  = get_post_meta($post->ID, '_wppm_project_due_date', true);
-    $assigned  = get_post_meta($post->ID, '_wppm_project_assigned', true); // new field
+    $assigned  = get_post_meta($post->ID, '_wppm_project_assigned', true);
 
+    // Get users
     $users = get_users();
+
+    // Check if project has incomplete tasks
+    $incomplete_tasks = new WP_Query([
+        'post_type' => 'wppm_task',
+        'meta_key' => '_wppm_related_project',
+        'meta_value' => $post->ID,
+        'meta_query' => [
+            [
+                'key' => '_wppm_task_status',
+                'value' => ['pending', 'in_progress'],
+                'compare' => 'IN'
+            ]
+        ],
+        'posts_per_page' => 1
+    ]);
+
+    $disable_completed = $incomplete_tasks->found_posts > 0 ? 'disabled' : '';
+    $completed_note = $disable_completed ? ' (Cannot complete, tasks pending)' : '';
     ?>
     <p>
         <label>Status:</label><br>
         <select name="wppm_project_status">
             <option value="pending" <?php selected($status, 'pending'); ?>>Pending</option>
             <option value="in_progress" <?php selected($status, 'in_progress'); ?>>In Progress</option>
-            <option value="completed" <?php selected($status, 'completed'); ?>>Completed</option>
+            <option value="completed" <?php selected($status, 'completed'); ?> <?php echo $disable_completed; ?>>
+                Completed<?php echo $completed_note; ?>
+            </option>
         </select>
     </p>
+
     <p>
         <label>Priority:</label><br>
         <select name="wppm_project_priority">
@@ -95,10 +117,12 @@ function wppm_project_meta_callback($post) {
             <option value="high" <?php selected($priority, 'high'); ?>>High</option>
         </select>
     </p>
+
     <p>
         <label>Due Date:</label><br>
         <input type="date" name="wppm_project_due_date" value="<?php echo esc_attr($due_date); ?>">
     </p>
+
     <p>
         <label>Assigned User:</label><br>
         <select name="wppm_project_assigned">
@@ -112,6 +136,7 @@ function wppm_project_meta_callback($post) {
     </p>
     <?php
 }
+
 
 function wppm_save_project_meta($post_id) {
     if (array_key_exists('wppm_project_status', $_POST)) {
@@ -285,20 +310,6 @@ function wppm_project_filter_query($query) {
 add_action('pre_get_posts', 'wppm_project_filter_query');
 
 
-// Enqueue Countdown JS & CSS
-function wppm_countdown_assets($hook) {
-    // Only load on Projects and Tasks list pages
-    if (!in_array($hook, ['edit.php'])) return;
-
-    global $typenow;
-    if(!in_array($typenow, ['wppm_project','wppm_task'])) return;
-
-    // JS
-    wp_enqueue_script('wppm-countdown', WPPM_PLUGIN_DIR_URL . 'assets/js/countdown.js', ['jquery'], '1.0', true);
-    // CSS
-    wp_enqueue_style('wppm-countdown', WPPM_PLUGIN_DIR_URL . 'assets/css/countdown.css');
-}
-add_action('admin_enqueue_scripts', 'wppm_countdown_assets');
 
 // Remove Comments column from Project CPT list table
 function wppm_remove_project_comments_column($columns) {
