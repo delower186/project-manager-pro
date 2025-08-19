@@ -86,59 +86,61 @@ add_action('admin_footer-edit.php', function() {
     if ($screen->post_type !== 'wppm_project') return;
     ?>
     <script>
-    jQuery(document).ready(function($){
-        // Add clickable class to rows
-        $('#the-list tr').each(function(){
-            var post_id = $(this).attr('id');
-            if(post_id){
-                post_id = post_id.replace('post-', '');
-                $(this).attr('data-post-id', post_id).addClass('wppm-clickable');
-            }
-        });
-
-        // Quick view modal
-        $('#the-list').on('click', 'tr.wppm-clickable', function(e){
-            if($(e.target).closest('th, td:first-child, td:nth-child(2)').length) return;
-
-            var post_id = $(this).data('post-id');
-            if(!post_id) return;
-
-            $.post(ajaxurl, {
-                action: 'wppm_project_quick_view',
-                post_id: post_id,
-                wppm_nonce: '<?php echo wp_create_nonce('wppm_action'); ?>'
-            }, function(response){
-                if(response.success){
-                    $('<div class="wppm-modal"></div>').html(response.data).dialog({
-                        modal: true,
-                        width: 700,
-                        title: 'Project Details',
-                        open: function () {
-                            var maxH = Math.floor(window.innerHeight * 0.8);
-                            $(this).css({ maxHeight: maxH + 'px', overflowY: 'auto' });
-                        },
-                        close: function() { $(this).dialog('destroy').remove(); }
-                    });
-                } else {
-                    alert('Failed to load project details.');
+        // escape nonce
+        var wppm_nonce = <?php echo wp_json_encode(wp_create_nonce('wppm_action')); ?>;
+        jQuery(document).ready(function($){
+            // Add clickable class to rows
+            $('#the-list tr').each(function(){
+                var post_id = $(this).attr('id');
+                if(post_id){
+                    post_id = post_id.replace('post-', '');
+                    $(this).attr('data-post-id', post_id).addClass('wppm-clickable');
                 }
             });
-        });
 
-        // Handle AJAX comment submit
-        $(document).on('submit', '#wppm-comment-form', function(e){
-            e.preventDefault();
-            var form = $(this);
-            $.post(ajaxurl, form.serialize(), function(response){
-                if(response.success){
-                    $('#wppm-comments h3').after(response.data.html);
-                    form[0].reset();
-                } else {
-                    alert(response.data);
-                }
+            // Quick view modal
+            $('#the-list').on('click', 'tr.wppm-clickable', function(e){
+                if($(e.target).closest('th, td:first-child, td:nth-child(2)').length) return;
+
+                var post_id = $(this).data('post-id');
+                if(!post_id) return;
+
+                $.post(ajaxurl, {
+                    action: 'wppm_project_quick_view',
+                    post_id: post_id,
+                    wppm_nonce: wppm_nonce
+                }, function(response){
+                    if(response.success){
+                        $('<div class="wppm-modal"></div>').html(response.data).dialog({
+                            modal: true,
+                            width: 700,
+                            title: 'Project Details',
+                            open: function () {
+                                var maxH = Math.floor(window.innerHeight * 0.8);
+                                $(this).css({ maxHeight: maxH + 'px', overflowY: 'auto' });
+                            },
+                            close: function() { $(this).dialog('destroy').remove(); }
+                        });
+                    } else {
+                        alert('Failed to load project details.');
+                    }
+                });
+            });
+
+            // Handle AJAX comment submit
+            $(document).on('submit', '#wppm-comment-form', function(e){
+                e.preventDefault();
+                var form = $(this);
+                $.post(ajaxurl, form.serialize(), function(response){
+                    if(response.success){
+                        $('#wppm-comments h3').after(response.data.html);
+                        form[0].reset();
+                    } else {
+                        alert(response.data);
+                    }
+                });
             });
         });
-    });
     </script>
     <style>
       .ui-dialog .ui-dialog-content.wppm-modal {

@@ -175,7 +175,7 @@ function wppm_task_column_content($column, $post_id) {
 
             echo '<span style="display:inline-block;padding:2px 6px;border-radius:4px;background:' 
                 . esc_attr($color) . ';color:#fff;font-weight:bold;">' 
-                . ucfirst($status) . '</span>';
+                . esc_html(ucfirst($status)) . '</span>';
             break;
 
         case 'priority':
@@ -188,7 +188,7 @@ function wppm_task_column_content($column, $post_id) {
 
             echo '<span style="display:inline-block;padding:2px 6px;border-radius:4px;background:' 
                 . esc_attr($color) . ';color:#fff;font-weight:bold;">' 
-                . ucfirst($priority) . '</span>';
+                . esc_html(ucfirst($priority)) . '</span>';
             break;
 
         case 'due_date':
@@ -281,7 +281,7 @@ function wppm_task_filters() {
     $current_status = isset($_GET['_wppm_task_status']) ? $_GET['_wppm_task_status'] : '';
     echo '<select name="_wppm_task_status"><option value="">All Statuses</option>';
     foreach($statuses as $key => $label) {
-        printf('<option value="%s"%s>%s</option>', $key, selected($current_status, $key, false), $label);
+        printf('<option value="%s"%s>%s</option>', esc_attr($key), selected($current_status, $key, false), esc_html($label));
     }
     echo '</select>';
 
@@ -290,7 +290,7 @@ function wppm_task_filters() {
     $current_user = isset($_GET['_wppm_task_assigned']) ? $_GET['_wppm_task_assigned'] : '';
     echo '<select name="_wppm_task_assigned"><option value="">All Users</option>';
     foreach($users as $user) {
-        printf('<option value="%d"%s>%s</option>', $user->ID, selected($current_user, $user->ID, false), $user->display_name);
+        printf('<option value="%d"%s>%s</option>', esc_attr($user->ID), selected($current_user, $user->ID, false), esc_html($user->display_name));
     }
     echo '</select>';
 
@@ -299,7 +299,7 @@ function wppm_task_filters() {
     $current_proj = isset($_GET['_wppm_related_project']) ? $_GET['_wppm_related_project'] : '';
     echo '<select name="_wppm_related_project"><option value="">All Projects</option>';
     foreach($projects as $proj) {
-        printf('<option value="%d"%s>%s</option>', $proj->ID, selected($current_proj, $proj->ID, false), $proj->post_title);
+        printf('<option value="%d"%s>%s</option>', esc_attr($proj->ID), selected($current_proj, $proj->ID, false), esc_html($proj->post_title));
     }
     echo '</select>';
 }

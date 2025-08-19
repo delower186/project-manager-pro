@@ -73,6 +73,9 @@ function wppm_project_meta_boxes() {
 add_action('add_meta_boxes', 'wppm_project_meta_boxes');
 
 function wppm_project_meta_callback($post) {
+    
+     wp_nonce_field('wppm_save_project_meta_action', 'wppm_project_meta_nonce');
+
     $status    = get_post_meta($post->ID, '_wppm_project_status', true);
     $priority  = get_post_meta($post->ID, '_wppm_project_priority', true);
     $due_date  = get_post_meta($post->ID, '_wppm_project_due_date', true);
@@ -83,18 +86,25 @@ function wppm_project_meta_callback($post) {
 
     // Check if project has incomplete tasks
     $incomplete_tasks = new WP_Query([
-        'post_type' => 'wppm_task',
-        'meta_key' => '_wppm_related_project',
-        'meta_value' => $post->ID,
-        'meta_query' => [
+        'post_type'      => 'wppm_task',
+        'posts_per_page' => 1,
+        'fields'         => 'ids', // ✅ Faster, only fetch IDs
+        'meta_query'     => [
+            'relation' => 'AND',
             [
-                'key' => '_wppm_task_status',
-                'value' => ['pending', 'in_progress'],
+                'key'   => '_wppm_related_project',
+                'value' => $post->ID,
+                'compare' => '='
+            ],
+            [
+                'key'     => '_wppm_task_status',
+                'value'   => ['pending', 'in_progress'],
                 'compare' => 'IN'
             ]
         ],
-        'posts_per_page' => 1
     ]);
+
+
 
     $disable_completed = $incomplete_tasks->found_posts > 0 ? 'disabled' : '';
     $completed_note = $disable_completed ? ' (Cannot complete, tasks pending)' : '';
@@ -140,20 +150,38 @@ function wppm_project_meta_callback($post) {
 
 
 function wppm_save_project_meta($post_id) {
-    if (array_key_exists('wppm_project_status', $_POST)) {
-        update_post_meta($post_id, '_wppm_project_status', sanitize_text_field($_POST['wppm_project_status']));
+    // 1. Check nonce
+    if (!isset($_POST['wppm_project_meta_nonce']) ||
+        !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['wppm_project_meta_nonce'])), 'wppm_save_project_meta_action')) {
+        return;
     }
-    if (array_key_exists('wppm_project_priority', $_POST)) {
-        update_post_meta($post_id, '_wppm_project_priority', sanitize_text_field($_POST['wppm_project_priority']));
+
+    // 2. Check autosave
+    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
+        return;
     }
-    if (array_key_exists('wppm_project_due_date', $_POST)) {
-        update_post_meta($post_id, '_wppm_project_due_date', sanitize_text_field($_POST['wppm_project_due_date']));
+
+    // 3. Check user capability
+    if (!current_user_can('edit_post', $post_id)) {
+        return;
     }
-    if (array_key_exists('wppm_project_assigned', $_POST)) {
+
+    // 4. Process & sanitize fields
+    if (isset($_POST['wppm_project_status'])) {
+        update_post_meta($post_id, '_wppm_project_status', sanitize_text_field(wp_unslash($_POST['wppm_project_status'])));
+    }
+    if (isset($_POST['wppm_project_priority'])) {
+        update_post_meta($post_id, '_wppm_project_priority', sanitize_text_field(wp_unslash($_POST['wppm_project_priority'])));
+    }
+    if (isset($_POST['wppm_project_due_date'])) {
+        update_post_meta($post_id, '_wppm_project_due_date', sanitize_text_field(wp_unslash($_POST['wppm_project_due_date'])));
+    }
+    if (isset($_POST['wppm_project_assigned'])) {
         update_post_meta($post_id, '_wppm_project_assigned', intval($_POST['wppm_project_assigned']));
     }
 }
 add_action('save_post', 'wppm_save_project_meta');
+
 
 
 
@@ -260,55 +288,106 @@ add_action('pre_get_posts', 'wppm_project_orderby');
 // Add dropdown filters above Projects table
 function wppm_project_filters() {
     global $typenow;
-    if ($typenow !== 'wppm_project') return;
+    if ($typenow !== 'wppm_project') {
+        return;
+    }
+
+    // ✅ First verify nonce before reading $_GET
+    $nonce_valid = (
+        isset($_GET['wppm_filter_nonce']) &&
+        wp_verify_nonce(sanitize_text_field(wp_unslash($_GET['wppm_filter_nonce'])), 'wppm_filter_projects')
+    );
 
     // Status filter
-    $statuses = ['pending' => 'Pending', 'in_progress' => 'In Progress', 'completed' => 'Completed'];
-    $current_status = isset($_GET['_wppm_project_status']) ? $_GET['_wppm_project_status'] : '';
+    $statuses = [
+        'pending'     => 'Pending',
+        'in_progress' => 'In Progress',
+        'completed'   => 'Completed'
+    ];
+
+    $current_status = '';
+    if ($nonce_valid && isset($_GET['_wppm_project_status'])) {
+        $current_status = sanitize_text_field(wp_unslash($_GET['_wppm_project_status']));
+    }
+
     echo '<select name="_wppm_project_status"><option value="">All Statuses</option>';
-    foreach($statuses as $key => $label) {
-        printf('<option value="%s"%s>%s</option>', esc_attr($key), selected($current_status, $key, false), esc_html($label));
+    foreach ($statuses as $key => $label) {
+        printf(
+            '<option value="%s"%s>%s</option>',
+            esc_attr($key),
+            selected($current_status, $key, false),
+            esc_html($label)
+        );
     }
     echo '</select>';
 
     // Assigned User filter
     $users = get_users();
-    $current_user = isset($_GET['_wppm_project_assigned']) ? $_GET['_wppm_project_assigned'] : '';
+
+    $current_user = '';
+    if ($nonce_valid && isset($_GET['_wppm_project_assigned'])) {
+        $current_user = intval($_GET['_wppm_project_assigned']);
+    }
+
     echo '<select name="_wppm_project_assigned"><option value="">All Users</option>';
-    foreach($users as $user) {
-        printf('<option value="%d"%s>%s</option>', esc_attr($user->ID), selected($current_user, $user->ID, false), esc_html($user->display_name));
+    foreach ($users as $user) {
+        printf(
+            '<option value="%d"%s>%s</option>',
+            esc_attr($user->ID),
+            selected($current_user, $user->ID, false),
+            esc_html($user->display_name)
+        );
     }
     echo '</select>';
+
+    // ✅ Add nonce field
+    wp_nonce_field('wppm_filter_projects', 'wppm_filter_nonce');
 }
 add_action('restrict_manage_posts', 'wppm_project_filters');
+
+
 
 // Filter query by selected status or assigned user
 function wppm_project_filter_query($query) {
     global $pagenow, $typenow;
+
     if ($typenow === 'wppm_project' && $pagenow === 'edit.php' && $query->is_main_query()) {
+
+        // ✅ Verify nonce
+        if (
+            !isset($_GET['wppm_filter_nonce']) ||
+            !wp_verify_nonce(sanitize_text_field(wp_unslash($_GET['wppm_filter_nonce'])), 'wppm_filter_projects')
+        ) {
+            return; // Nonce invalid → skip filtering
+        }
+
+        $meta_query = $query->get('meta_query') ?: [];
+
         // Status filter
         if (!empty($_GET['_wppm_project_status'])) {
-            $query->set('meta_query', array(
-                array(
-                    'key' => '_wppm_project_status',
-                    'value' => $_GET['_wppm_project_status'],
-                    'compare' => '='
-                )
-            ));
+            $meta_query[] = [
+                'key'     => '_wppm_project_status',
+                'value'   => sanitize_text_field(wp_unslash($_GET['_wppm_project_status'])),
+                'compare' => '='
+            ];
         }
+
         // Assigned User filter
         if (!empty($_GET['_wppm_project_assigned'])) {
-            $meta_query = $query->get('meta_query') ?: [];
-            $meta_query[] = array(
-                'key' => '_wppm_project_assigned',
-                'value' => intval($_GET['_wppm_project_assigned']),
+            $meta_query[] = [
+                'key'     => '_wppm_project_assigned',
+                'value'   => intval($_GET['_wppm_project_assigned']),
                 'compare' => '='
-            );
+            ];
+        }
+
+        if ($meta_query) {
             $query->set('meta_query', $meta_query);
         }
     }
 }
 add_action('pre_get_posts', 'wppm_project_filter_query');
+
 
 
 
