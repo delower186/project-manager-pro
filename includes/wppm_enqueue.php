@@ -15,24 +15,30 @@ function wppm_countdown_assets($hook) {
 }
 add_action('admin_enqueue_scripts', 'wppm_countdown_assets');
 
-function wppm_project_assets($hook) {
+function wppm_modal_assets($hook) {
     // Only load for the project list screen
-    if ($hook !== 'edit.php' || get_post_type() !== 'wppm_project') return;
 
-    // CSS
-    wp_enqueue_style('jquery-ui-css', '//code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css', [], '1.13.2');
+    if ($hook !== 'edit.php') return;
+    $screen = get_current_screen();
+    if(in_array($screen->post_type, ['wppm_project', 'wppm_task'])){
+        // CSS
+        wp_enqueue_style('jquery-ui-css', '//code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css', [], '1.13.2');
 
-    // JS
-    wp_enqueue_script('jquery-ui-dialog'); // required for jQuery UI modal
-    wp_enqueue_script('wppm_project_modal', WPPM_PLUGIN_DIR_URL . 'assets/js/project_modal.js', ['jquery','jquery-ui-dialog'], '1.0', true);
+        // JS
+        wp_enqueue_script('jquery-ui-dialog'); // required for jQuery UI modal
+        wp_enqueue_script('wppm_project_modal', WPPM_PLUGIN_DIR_URL . 'assets/js/project_modal.js', ['jquery','jquery-ui-dialog'], '1.0', true);
+        wp_enqueue_script('wppm_task_modal', WPPM_PLUGIN_DIR_URL . 'assets/js/task_modal.js', ['jquery','jquery-ui-dialog'], '1.0', true);
 
-    // Localize nonce & ajax URL for project_modal.js
-    wp_localize_script('wppm_project_modal', 'wppm_ajax', [
-        'ajax_url' => admin_url('admin-ajax.php'),
-        'nonce'    => wp_create_nonce('wppm_action')
-    ]);
+        // Localize for both scripts
+        $localize = [
+            'ajaxurl' => admin_url('admin-ajax.php'),
+            'nonce'   => wp_create_nonce('wppm_action')
+        ];
+        wp_localize_script('wppm_project_modal', 'wppm_ajax', $localize);
+        wp_localize_script('wppm_task_modal', 'wppm_ajax', $localize);
+    }
 }
-add_action('admin_enqueue_scripts', 'wppm_project_assets');
+add_action('admin_enqueue_scripts', 'wppm_modal_assets');
 
 
 function wppm_dashboard_assets($hook) {

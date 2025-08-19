@@ -18,3 +18,4 @@ require_once WPPM_PLUGIN_DIR_PATH . 'project/cpt-projects.php';
 require_once WPPM_PLUGIN_DIR_PATH . 'task/cpt-tasks.php';
 require_once WPPM_PLUGIN_DIR_PATH . 'includes/menu.php';
 require_once WPPM_PLUGIN_DIR_PATH . 'project/project_view.php';
+require_once WPPM_PLUGIN_DIR_PATH . 'task/task_view.php';
