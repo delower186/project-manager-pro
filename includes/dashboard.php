@@ -17,7 +17,7 @@ if (!defined('ABSPATH')) exit;
                         'meta_value'=> 'completed',
                         'posts_per_page' => -1
                     ]);
-                    echo $completed_projects->found_posts;
+                    echo esc_html($completed_projects->found_posts);
                     ?>
                 </p>
             </div>
@@ -33,7 +33,7 @@ if (!defined('ABSPATH')) exit;
                         'meta_value'=> 'completed',
                         'posts_per_page' => -1
                     ]);
-                    echo $completed_tasks->found_posts;
+                    echo esc_html($completed_tasks->found_posts);
                     ?>
                 </p>
             </div>
@@ -49,7 +49,7 @@ if (!defined('ABSPATH')) exit;
                         'meta_value'=> 'pending',
                         'posts_per_page' => -1
                     ]);
-                    echo $pending_tasks->found_posts;
+                    echo esc_html($pending_tasks->found_posts);
                     ?>
                 </p>
             </div>
@@ -127,24 +127,24 @@ if (!defined('ABSPATH')) exit;
                                 <td style="padding:10px; border:1px solid #ddd;">
                                     <strong><?php the_title(); ?></strong>
                                     <!-- Completed / Total tasks counter -->
-                                    <span style="font-size:12px; color:#555; margin-left:8px;">(<?php echo $completed.' / '.$total; ?>)</span>
+                                    <span style="font-size:12px; color:#555; margin-left:8px;">(<?php echo esc_html($completed).' / '.esc_html($total); ?>)</span>
                                 </td>
                                 <td style="padding:10px; border:1px solid #ddd;">
                                     <?php echo $proj_manager ? esc_html($proj_manager->display_name) : '—'; ?>
                                 </td>
                                 <td style="padding:10px; border:1px solid #ddd;">
-                                    <span class="wppm-badge wppm-status-<?php echo esc_attr($proj_status); ?>"><?php echo ucfirst($proj_status); ?></span>
+                                    <span class="wppm-badge wppm-status-<?php echo esc_attr($proj_status); ?>"><?php echo esc_html(ucfirst($proj_status)); ?></span>
                                 </td>
                                 <td style="padding:10px; border:1px solid #ddd;">
-                                    <span class="wppm-badge wppm-priority-<?php echo esc_attr($proj_priority); ?>"><?php echo ucfirst($proj_priority); ?></span>
+                                    <span class="wppm-badge wppm-priority-<?php echo esc_attr($proj_priority); ?>"><?php echo esc_html(ucfirst($proj_priority)); ?></span>
                                 </td>
                                 <td style="padding:10px; border:1px solid #ddd; width:220px;">
                                     <div style="background:#ddd; border-radius:6px; overflow:hidden; height:20px;">
-                                        <div class="wppm-progress-bar" data-percent="<?php echo $percent; ?>" style="width:<?php echo $percent; ?>%; height:100%; background:#4caf50; text-align:center; color:white;"><?php echo $percent; ?>%</div>
+                                        <div class="wppm-progress-bar" data-percent="<?php echo esc_attr($percent); ?>" style="width:<?php echo esc_attr($percent); ?>%; height:100%; background:#4caf50; text-align:center; color:white;"><?php echo esc_html($percent); ?>%</div>
                                     </div>
                                 </td>
                                 <td style="padding:10px; border:1px solid #ddd;">
-                                    <?php echo $tasks_running->found_posts.' / '.$tasks_completed->found_posts.' / '.$tasks_pending->found_posts; ?>
+                                    <?php echo esc_html($tasks_running->found_posts).' / '.esc_html($tasks_completed->found_posts).' / '.esc_html($tasks_pending->found_posts); ?>
                                 </td>
                                 <td style="padding:10px; border:1px solid #ddd;">
                                     <?php if($due_date): ?>
@@ -187,12 +187,12 @@ if (!defined('ABSPATH')) exit;
                                                 ?>
                                                     <tr style="background:#fff;">
                                                         <td style="padding:6px; border:1px solid #ddd;"><?php the_title(); ?></td>
-                                                        <td style="padding:6px; border:1px solid #ddd;"><?php echo $assigned_user ? $assigned_user->display_name : '—'; ?></td>
+                                                        <td style="padding:6px; border:1px solid #ddd;"><?php echo $assigned_user ? esc_html($assigned_user->display_name) : '—'; ?></td>
                                                         <td style="padding:6px; border:1px solid #ddd;">
-                                                            <span class="wppm-badge wppm-status-<?php echo esc_attr($task_status); ?>"><?php echo ucfirst($task_status); ?></span>
+                                                            <span class="wppm-badge wppm-status-<?php echo esc_attr($task_status); ?>"><?php echo esc_html(ucfirst($task_status)); ?></span>
                                                         </td>
                                                         <td style="padding:6px; border:1px solid #ddd;">
-                                                            <span class="wppm-badge wppm-priority-<?php echo esc_attr($task_priority); ?>"><?php echo ucfirst($task_priority); ?></span>
+                                                            <span class="wppm-badge wppm-priority-<?php echo esc_attr($task_priority); ?>"><?php echo esc_html(ucfirst($task_priority)); ?></span>
                                                         </td>
                                                         <td style="padding:6px; border:1px solid #ddd;"><?php echo $task_due ? esc_html($task_due) : '—'; ?></td>
                                                         <td style="padding:6px; border:1px solid #ddd;">

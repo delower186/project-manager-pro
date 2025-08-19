@@ -1,10 +1,10 @@
 === WP Project Manager ===
-Contributors: yourname
-Tags: project management, tasks, todo, wp-project-manager
-Requires at least: 6.0
+Contributors: delower186
+Tags: task manager, project tracker, wp-project-manager, productivity
+Requires at least: 6.4
 Tested up to: 6.8
-Requires PHP: 7.4
-Stable tag: 1.0
+Requires PHP: 7.2.24
+Stable tag: 1.0.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -55,4 +55,4 @@ Initial release.
 This plugin is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License version 2.
 
 == Additional Notes ==
-For support or feature requests, please contact: yourname@example.com
+For support or feature requests, please contact: apps@sandalia.com.bd

@@ -1,5 +1,5 @@
 <?php 
-
+if (!defined('ABSPATH')) exit;
 // Enqueue Countdown JS & CSS
 function wppm_countdown_assets($hook) {
     // Only load on Projects and Tasks list pages

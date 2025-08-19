@@ -1,4 +1,5 @@
 <?php 
+if (!defined('ABSPATH')) exit;
 // Admin Menu
 function wppm_admin_menu() {
     // Top-level Dashboard menu

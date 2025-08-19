@@ -1,4 +1,5 @@
 <?php
+if (!defined('ABSPATH')) exit;
 // Register Tasks CPT
 function wppm_register_task_cpt() {
     $labels = [

@@ -1,4 +1,5 @@
 <?php
+if (!defined('ABSPATH')) exit;
 // Register Projects CPT
 function wppm_register_project_cpt() {
     $labels = [
