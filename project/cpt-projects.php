@@ -104,8 +104,8 @@ function wppm_project_meta_callback($post) {
         <select name="wppm_project_status">
             <option value="pending" <?php selected($status, 'pending'); ?>>Pending</option>
             <option value="in_progress" <?php selected($status, 'in_progress'); ?>>In Progress</option>
-            <option value="completed" <?php selected($status, 'completed'); ?> <?php echo $disable_completed; ?>>
-                Completed<?php echo $completed_note; ?>
+            <option value="completed" <?php selected($status, 'completed'); ?> <?php echo esc_html($disable_completed); ?>>
+                Completed<?php echo esc_html($completed_note); ?>
             </option>
         </select>
     </p>
@@ -178,7 +178,7 @@ function wppm_project_column_content($column, $post_id) {
             if ($status === 'pending') $color = '#ff9800';
             elseif ($status === 'in_progress') $color = '#2196f3';
             elseif ($status === 'completed') $color = '#4caf50';
-            echo '<span style="display:inline-block;padding:2px 6px;border-radius:4px;background:' . esc_attr($color) . ';color:#fff;font-weight:bold;">' . ucfirst($status) . '</span>';
+            echo '<span style="display:inline-block;padding:2px 6px;border-radius:4px;background:' . esc_attr($color) . ';color:#fff;font-weight:bold;">' . esc_html(ucfirst($status)) . '</span>';
             break;
 
         case 'priority':
@@ -187,7 +187,7 @@ function wppm_project_column_content($column, $post_id) {
             if ($priority === 'low') $color = '#4caf50';
             elseif ($priority === 'medium') $color = '#ff9800';
             elseif ($priority === 'high') $color = '#f44336';
-            echo '<span style="display:inline-block;padding:2px 6px;border-radius:4px;background:' . esc_attr($color) . ';color:#fff;font-weight:bold;">' . ucfirst($priority) . '</span>';
+            echo '<span style="display:inline-block;padding:2px 6px;border-radius:4px;background:' . esc_attr($color) . ';color:#fff;font-weight:bold;">' . esc_html(ucfirst($priority)) . '</span>';
             break;
 
         case 'due_date':
@@ -209,7 +209,7 @@ function wppm_project_column_content($column, $post_id) {
             elseif ($status === 'completed') $color = '#4caf50';
 
             if ($due_date) {
-                echo '<span class="wppm-countdown" data-due="' . esc_attr($due_date) . '" data-status="'.$status.'" style="display:inline-block;padding:2px 6px;border-radius:4px;background:' . esc_attr($color) . ';color:#fff;font-weight:bold;">&nbsp;</span>';
+                echo '<span class="wppm-countdown" data-due="' . esc_attr($due_date) . '" data-status="'.esc_html($status).'" style="display:inline-block;padding:2px 6px;border-radius:4px;background:' . esc_attr($color) . ';color:#fff;font-weight:bold;">&nbsp;</span>';
             } else {
                 echo '—';
             }
@@ -267,7 +267,7 @@ function wppm_project_filters() {
     $current_status = isset($_GET['_wppm_project_status']) ? $_GET['_wppm_project_status'] : '';
     echo '<select name="_wppm_project_status"><option value="">All Statuses</option>';
     foreach($statuses as $key => $label) {
-        printf('<option value="%s"%s>%s</option>', $key, selected($current_status, $key, false), $label);
+        printf('<option value="%s"%s>%s</option>', esc_attr($key), selected($current_status, $key, false), esc_html($label));
     }
     echo '</select>';
 
@@ -276,7 +276,7 @@ function wppm_project_filters() {
     $current_user = isset($_GET['_wppm_project_assigned']) ? $_GET['_wppm_project_assigned'] : '';
     echo '<select name="_wppm_project_assigned"><option value="">All Users</option>';
     foreach($users as $user) {
-        printf('<option value="%d"%s>%s</option>', $user->ID, selected($current_user, $user->ID, false), $user->display_name);
+        printf('<option value="%d"%s>%s</option>', esc_attr($user->ID), selected($current_user, $user->ID, false), esc_html($user->display_name));
     }
     echo '</select>';
 }
