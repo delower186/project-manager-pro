@@ -23,8 +23,8 @@ jQuery(document).ready(function($){
         $elem.text(days+'d '+hours+'h '+minutes+'m '+seconds+'s');
 
         var totalHours = diff / (1000*60*60);
-        if(totalHours <= 24) $elem.css('color', 'orange');
-        if(totalHours <= 1) $elem.css('color', 'red');
+        if(totalHours <= 24) $elem.css({'background':'#ff9800','color':'#fff','padding':'2px 6px','border-radius':'4px'});
+        if(totalHours <= 1) $elem.css({'background':'#f44336','color':'#fff','padding':'2px 6px','border-radius':'4px'});
     }
 
     $('.wppm-countdown').each(function(){
