@@ -11,7 +11,7 @@ function wppm_countdown_assets($hook) {
     // JS
     wp_enqueue_script('wppm-countdown', WPPM_PLUGIN_DIR_URL . 'assets/js/countdown.js', ['jquery'], '1.0', true);
     // CSS
-    wp_enqueue_style('wppm-countdown', WPPM_PLUGIN_DIR_URL . 'assets/css/countdown.css');
+    wp_enqueue_style('wppm-countdown', WPPM_PLUGIN_DIR_URL . 'assets/css/countdown.css',false,'1.0', true);
 }
 add_action('admin_enqueue_scripts', 'wppm_countdown_assets');
 
@@ -49,6 +49,6 @@ function wppm_dashboard_assets($hook) {
     wp_enqueue_script('wppm-dashboard-js', WPPM_PLUGIN_DIR_URL . 'assets/js/dashboard.js', ['jquery'], '1.0', true);
 
     // CSS
-    wp_enqueue_style('wppm-dashboard-css', WPPM_PLUGIN_DIR_URL . 'assets/css/dashboard.css');
+    wp_enqueue_style('wppm-dashboard-css', WPPM_PLUGIN_DIR_URL . 'assets/css/dashboard.css',false,'1.0',true);
 }
 add_action('admin_enqueue_scripts', 'wppm_dashboard_assets');

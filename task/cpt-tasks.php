@@ -73,6 +73,9 @@ function wppm_task_meta_boxes() {
 add_action('add_meta_boxes', 'wppm_task_meta_boxes');
 
 function wppm_task_meta_callback($post) {
+
+    wp_nonce_field('wppm_save_task_meta_action', 'wppm_task_meta_nonce');
+
     $status   = get_post_meta($post->ID, '_wppm_task_status', true);
     $priority = get_post_meta($post->ID, '_wppm_task_priority', true);
     $due_date = get_post_meta($post->ID, '_wppm_task_due_date', true);
@@ -130,23 +133,49 @@ function wppm_task_meta_callback($post) {
 }
 
 function wppm_save_task_meta($post_id) {
-    if (array_key_exists('wppm_task_status', $_POST)) {
-        update_post_meta($post_id, '_wppm_task_status', sanitize_text_field($_POST['wppm_task_status']));
+    // Check if our nonce is set.
+    if (!isset($_POST['wppm_task_meta_nonce'])) {
+        return;
     }
-    if (array_key_exists('wppm_task_priority', $_POST)) {
-        update_post_meta($post_id, '_wppm_task_priority', sanitize_text_field($_POST['wppm_task_priority']));
+
+    // Verify the nonce.
+    if (!wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['wppm_task_meta_nonce'])), 'wppm_save_task_meta_action')) {
+        return;
     }
-    if (array_key_exists('wppm_task_due_date', $_POST)) {
-        update_post_meta($post_id, '_wppm_task_due_date', sanitize_text_field($_POST['wppm_task_due_date']));
+
+    // Prevent autosave from overwriting.
+    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
+        return;
     }
-    if (array_key_exists('wppm_task_assigned', $_POST)) {
+
+    // Check user capability (optional but recommended).
+    if (!current_user_can('edit_post', $post_id)) {
+        return;
+    }
+
+    // Now process fields safely.
+    if (isset($_POST['wppm_task_status'])) {
+        update_post_meta($post_id, '_wppm_task_status', sanitize_text_field(wp_unslash($_POST['wppm_task_status'])));
+    }
+
+    if (isset($_POST['wppm_task_priority'])) {
+        update_post_meta($post_id, '_wppm_task_priority', sanitize_text_field(wp_unslash($_POST['wppm_task_priority'])));
+    }
+
+    if (isset($_POST['wppm_task_due_date'])) {
+        update_post_meta($post_id, '_wppm_task_due_date', sanitize_text_field(wp_unslash($_POST['wppm_task_due_date'])));
+    }
+
+    if (isset($_POST['wppm_task_assigned'])) {
         update_post_meta($post_id, '_wppm_task_assigned', intval($_POST['wppm_task_assigned']));
     }
-    if (array_key_exists('wppm_related_project', $_POST)) {
+
+    if (isset($_POST['wppm_related_project'])) {
         update_post_meta($post_id, '_wppm_related_project', intval($_POST['wppm_related_project']));
     }
 }
 add_action('save_post', 'wppm_save_task_meta');
+
 
 
 // custom columns
@@ -231,112 +260,179 @@ add_action('manage_wppm_task_posts_custom_column', 'wppm_task_column_content', 1
 
 
 // Make columns sortable in Tasks table
-// Make columns sortable in Tasks table
+// 1. Register sortable columns
 function wppm_task_sortable_columns($columns) {
-    $columns['status']   = 'status';
-    $columns['priority'] = 'priority';
-    $columns['due_date'] = 'due_date';
-    $columns['assigned'] = 'assigned';
-    $columns['related']  = 'related';
+    $columns['status']   = 'wppm_task_status';
+    $columns['priority'] = 'wppm_task_priority';
+    $columns['due_date'] = 'wppm_task_due_date';
+    $columns['assigned'] = 'wppm_task_assigned';
+    $columns['related']  = 'wppm_related_project';
     return $columns;
 }
 add_filter('manage_edit-wppm_task_sortable_columns', 'wppm_task_sortable_columns');
 
-// Handle sorting by meta
+// 2. Modify query for sorting
 function wppm_task_orderby($query) {
-    if(!is_admin()) return;
+    if (!is_admin() || !$query->is_main_query()) {
+        return;
+    }
 
     $orderby = $query->get('orderby');
 
-    if($orderby == 'status') {
-        $query->set('meta_key', '_wppm_task_status');
-        $query->set('orderby', 'meta_value');
-    }
-    elseif($orderby == 'priority') {
-        $query->set('meta_key', '_wppm_task_priority');
-        $query->set('orderby', 'meta_value');
-    }
-    elseif($orderby == 'due_date') {
-        $query->set('meta_key', '_wppm_task_due_date');
-        $query->set('orderby', 'meta_value');
-    }
-    elseif($orderby == 'assigned') {
-        $query->set('meta_key', '_wppm_task_assigned');
-        $query->set('orderby', 'meta_value_num');
-    }
-    elseif($orderby == 'related') {
-        $query->set('meta_key', '_wppm_related_project');
-        $query->set('orderby', 'meta_value_num');
+    switch ($orderby) {
+        case 'wppm_task_status':
+            $query->set('meta_key', '_wppm_task_status');
+            $query->set('orderby', 'meta_value');
+            break;
+        case 'wppm_task_priority':
+            $query->set('meta_key', '_wppm_task_priority');
+            $query->set('orderby', 'meta_value');
+            break;
+        case 'wppm_task_due_date':
+            $query->set('meta_key', '_wppm_task_due_date');
+            $query->set('orderby', 'meta_value');
+            break;
+        case 'wppm_task_assigned':
+            $query->set('meta_key', '_wppm_task_assigned');
+            $query->set('orderby', 'meta_value_num');
+            break;
+        case 'wppm_related_project':
+            $query->set('meta_key', '_wppm_related_project');
+            $query->set('orderby', 'meta_value_num');
+            break;
     }
 }
 add_action('pre_get_posts', 'wppm_task_orderby');
 
+
 // Add filters above Tasks table
 function wppm_task_filters() {
     global $typenow;
-    if ($typenow !== 'wppm_task') return;
+    if ($typenow !== 'wppm_task') {
+        return;
+    }
+
+    // Add nonce field (printed in the filter form)
+    wp_nonce_field('wppm_task_filters_action', 'wppm_task_filters_nonce');
+
+    // Initialize defaults
+    $current_status = '';
+    $current_user   = '';
+    $current_proj   = '';
+
+    // Verify nonce before processing $_GET values
+    if (
+        isset($_GET['wppm_task_filters_nonce']) &&
+        wp_verify_nonce(
+            sanitize_text_field(wp_unslash($_GET['wppm_task_filters_nonce'])),
+            'wppm_task_filters_action'
+        )
+    ) {
+        $current_status = isset($_GET['_wppm_task_status'])
+            ? sanitize_text_field(wp_unslash($_GET['_wppm_task_status']))
+            : '';
+
+        $current_user = isset($_GET['_wppm_task_assigned'])
+            ? intval($_GET['_wppm_task_assigned'])
+            : '';
+
+        $current_proj = isset($_GET['_wppm_related_project'])
+            ? intval($_GET['_wppm_related_project'])
+            : '';
+    }
 
     // Status filter
-    $statuses = ['pending'=>'Pending','in_progress'=>'In Progress','completed'=>'Completed'];
-    $current_status = isset($_GET['_wppm_task_status']) ? $_GET['_wppm_task_status'] : '';
+    $statuses = [
+        'pending'     => 'Pending',
+        'in_progress' => 'In Progress',
+        'completed'   => 'Completed',
+    ];
     echo '<select name="_wppm_task_status"><option value="">All Statuses</option>';
-    foreach($statuses as $key => $label) {
-        printf('<option value="%s"%s>%s</option>', esc_attr($key), selected($current_status, $key, false), esc_html($label));
+    foreach ($statuses as $key => $label) {
+        printf(
+            '<option value="%s"%s>%s</option>',
+            esc_attr($key),
+            selected($current_status, $key, false),
+            esc_html($label)
+        );
     }
     echo '</select>';
 
     // Assigned User filter
     $users = get_users();
-    $current_user = isset($_GET['_wppm_task_assigned']) ? $_GET['_wppm_task_assigned'] : '';
     echo '<select name="_wppm_task_assigned"><option value="">All Users</option>';
-    foreach($users as $user) {
-        printf('<option value="%d"%s>%s</option>', esc_attr($user->ID), selected($current_user, $user->ID, false), esc_html($user->display_name));
+    foreach ($users as $user) {
+        printf(
+            '<option value="%d"%s>%s</option>',
+            esc_attr($user->ID),
+            selected($current_user, $user->ID, false),
+            esc_html($user->display_name)
+        );
     }
     echo '</select>';
 
     // Related Project filter
-    $projects = get_posts(['post_type'=>'wppm_project','numberposts'=>-1]);
-    $current_proj = isset($_GET['_wppm_related_project']) ? $_GET['_wppm_related_project'] : '';
+    $projects = get_posts([
+        'post_type'   => 'wppm_project',
+        'numberposts' => -1,
+    ]);
     echo '<select name="_wppm_related_project"><option value="">All Projects</option>';
-    foreach($projects as $proj) {
-        printf('<option value="%d"%s>%s</option>', esc_attr($proj->ID), selected($current_proj, $proj->ID, false), esc_html($proj->post_title));
+    foreach ($projects as $proj) {
+        printf(
+            '<option value="%d"%s>%s</option>',
+            esc_attr($proj->ID),
+            selected($current_proj, $proj->ID, false),
+            esc_html($proj->post_title)
+        );
     }
     echo '</select>';
 }
 add_action('restrict_manage_posts', 'wppm_task_filters');
 
+
+
 // Filter Tasks query
-function wppm_task_filter_query($query) {
+function wppm_task_filters_query($query) {
     global $pagenow, $typenow;
-    if ($typenow === 'wppm_task' && $pagenow === 'edit.php' && $query->is_main_query()) {
-        $meta_query = [];
 
-        if(!empty($_GET['_wppm_task_status'])) {
-            $meta_query[] = [
-                'key' => '_wppm_task_status',
-                'value' => $_GET['_wppm_task_status'],
-                'compare' => '='
-            ];
-        }
-        if(!empty($_GET['_wppm_task_assigned'])) {
-            $meta_query[] = [
-                'key' => '_wppm_task_assigned',
-                'value' => intval($_GET['_wppm_task_assigned']),
-                'compare' => '='
-            ];
-        }
-        if(!empty($_GET['_wppm_related_project'])) {
-            $meta_query[] = [
-                'key' => '_wppm_related_project',
-                'value' => intval($_GET['_wppm_related_project']),
-                'compare' => '='
-            ];
+    if ($pagenow === 'edit.php' && $typenow === 'wppm_task' && $query->is_main_query()) {
+
+        // Verify nonce
+        if (!isset($_GET['wppm_task_filters_nonce']) || 
+            !wp_verify_nonce(sanitize_text_field(wp_unslash($_GET['wppm_task_filters_nonce'])), 'wppm_task_filters_action')) {
+            return; // Nonce failed, bail out
         }
 
-        if(!empty($meta_query)) $query->set('meta_query', $meta_query);
+        if (!empty($_GET['_wppm_task_status'])) {
+            $query->set('meta_query', [
+                [
+                    'key'   => '_wppm_task_status',
+                    'value' => sanitize_text_field(wp_unslash($_GET['_wppm_task_status']))
+                ]
+            ]);
+        }
+
+        if (!empty($_GET['_wppm_task_assigned'])) {
+            $query->set('meta_query', [
+                [
+                    'key'   => '_wppm_task_assigned',
+                    'value' => intval($_GET['_wppm_task_assigned'])
+                ]
+            ]);
+        }
+
+        if (!empty($_GET['_wppm_related_project'])) {
+            $query->set('meta_query', [
+                [
+                    'key'   => '_wppm_related_project',
+                    'value' => intval($_GET['_wppm_related_project'])
+                ]
+            ]);
+        }
     }
 }
-add_action('pre_get_posts', 'wppm_task_filter_query');
+add_action('pre_get_posts', 'wppm_task_filters_query');
+
 
 // Remove Comments column from Project CPT list table
 function wppm_remove_task_comments_column($columns) {
