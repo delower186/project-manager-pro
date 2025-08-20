@@ -42,13 +42,13 @@ Yes, each task can be linked to a project using the meta box in the task editor.
 3. Task editor screen with Project selection.
 
 == Changelog ==
-= 1.0 =
+= 1.0.0 =
 * Initial release with Projects and Tasks custom post types.
 * Admin menus created with Projects and Tasks as submenus.
 * Tasks can be linked to Projects via meta box.
 
 == Upgrade Notice ==
-= 1.0 =
+= 1.0.0 =
 Initial release.
 
 == License ==
