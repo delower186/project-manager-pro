@@ -1,13 +1,13 @@
 <?php
 /*
-Plugin Name: WP Project Manager
-Plugin URI: https://sandalia.com.bd/apps
-Description: WP Project Manager helps teams manage projects, tasks, and deadlines directly from WordPress, enabling seamless collaboration and productivity.
-Version:1.0.0
+Plugin Name: Project Manager Pro
+Plugin URI: https://sandalia.com.bd/apps/project-manager-pro
+Description: Project Manager Pro helps teams manage projects, tasks, and deadlines directly from WordPress, enabling seamless collaboration and productivity.
+Version:1.0.2
 Author: Delower
-Author URI: https://sandalia.com.bd/apps
+Author URI: https://github.com/delower186
 License: GPLv2 or later
-Text Domain: wp-project-manager
+Text Domain: project-manager-pro
 */
 /*
 This program is free software; you can redistribute it and/or
@@ -31,13 +31,13 @@ Copyright (C) 2025  delower.
 // Exit if accessed directly
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define('WPPM_PLUGIN_DIR_PATH', plugin_dir_path( __FILE__));
-define('WPPM_PLUGIN_DIR_URL', plugin_dir_url( __FILE__));
+define('PMP_PLUGIN_DIR_PATH', plugin_dir_path( __FILE__));
+define('PMP_PLUGIN_DIR_URL', plugin_dir_url( __FILE__));
 
 // Include CPTs
-require_once WPPM_PLUGIN_DIR_PATH . 'includes/wppm_enqueue.php';
-require_once WPPM_PLUGIN_DIR_PATH . 'project/cpt-projects.php';
-require_once WPPM_PLUGIN_DIR_PATH . 'task/cpt-tasks.php';
-require_once WPPM_PLUGIN_DIR_PATH . 'includes/menu.php';
-require_once WPPM_PLUGIN_DIR_PATH . 'project/project_view.php';
-require_once WPPM_PLUGIN_DIR_PATH . 'task/task_view.php';
+require_once PMP_PLUGIN_DIR_PATH . 'includes/pmp_enqueue.php';
+require_once PMP_PLUGIN_DIR_PATH . 'project/pmp_cpt_projects.php';
+require_once PMP_PLUGIN_DIR_PATH . 'task/pmp_cpt_tasks.php';
+require_once PMP_PLUGIN_DIR_PATH . 'includes/pmp_menu.php';
+require_once PMP_PLUGIN_DIR_PATH . 'project/pmp_project_view.php';
+require_once PMP_PLUGIN_DIR_PATH . 'task/pmp_task_view.php';

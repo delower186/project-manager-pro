@@ -1,44 +1,44 @@
 jQuery(document).ready(function($){
 
-    // Open modal on task row click
-    $(document).on('click', 'tr.wppm-task-clickable', function(e){
+    // Open modal on project row click
+    $(document).on('click', 'tr.pmp-clickable', function(e){
         if($(e.target).closest('th, td:first-child, td:nth-child(2)').length) return;
 
         var post_id = $(this).data('post-id');
         if(!post_id) return;
 
-        var $modal = $('#wppm-task-single-modal');
+        var $modal = $('#pmp-single-modal');
 
         // Close previous dialog and unbind previous handlers
         if($modal.hasClass('ui-dialog-content')) {
             $modal.dialog('close');
-            $modal.off('submit', '#wppm-task-comment-form'); // remove previous submit
+            $modal.off('submit', '#pmp-comment-form'); // remove previous submit
         }
 
         $modal.html('Loading...');
 
         $.post(ajaxurl, {
-            action: 'wppm_task_quick_view',
+            action: 'pmp_project_quick_view',
             post_id: post_id,
-            wppm_nonce: wppm_ajax.nonce
+            pmp_nonce: pmp_ajax.nonce
         }, function(response){
             if(response.success){
                 $modal.html(response.data);
                 $modal.dialog({
                     modal: true,
                     width: 700,
-                    title: 'Task Details',
+                    title: 'Project Details',
                     close: function(){
                         $modal.html('');
-                        $modal.off('submit', '#wppm-task-comment-form'); // remove handler on close
+                        $modal.off('submit', '#pmp-comment-form'); // remove handler on close
                     }
                 });
 
                 // Attach submit handler once per modal open
-                $modal.on('submit', '#wppm-task-comment-form', function(e){
+                $modal.on('submit', '#pmp-comment-form', function(e){
                     e.preventDefault();
                     var $form = $(this);
-                    var $container = $form.closest('#wppm-task-comments');
+                    var $container = $form.closest('#pmp-comments');
 
                     $.post(ajaxurl, $form.serialize(), function(resp){
                         if(resp.success && resp.data.html){
@@ -51,7 +51,7 @@ jQuery(document).ready(function($){
                 });
 
             } else {
-                alert(response.data && response.data.message ? response.data.message : 'Failed to load task details.');
+                alert(response.data && response.data.message ? response.data.message : 'Failed to load project details.');
             }
         });
     });

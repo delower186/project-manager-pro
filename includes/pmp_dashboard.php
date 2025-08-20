@@ -3,7 +3,7 @@ if (!defined('ABSPATH')) exit;
 ?>
 
 <div class="wrap">
-    <h1>WP Project Manager Dashboard</h1>
+    <h1>Project Manager Pro Dashboard</h1>
 
     <div style="display:flex; gap:40px; margin-top:20px; flex-wrap:wrap;">
         <!-- Completed Projects -->
@@ -11,10 +11,10 @@ if (!defined('ABSPATH')) exit;
             <h2>Total Completed Projects</h2>
             <p style="font-size:28px; font-weight:bold; margin:0;">
                 <?php
-                $completed_projects_count = wp_count_posts('wppm_project')->publish;
+                $completed_projects_count = wp_count_posts('pmp_project')->publish;
                 $completed_projects = new WP_Query([
-                    'post_type' => 'wppm_project',
-                    'meta_key' => '_wppm_project_status',
+                    'post_type' => 'pmp_project',
+                    'meta_key' => '_pmp_project_status',
                     'meta_value' => 'completed',
                     'fields' => 'ids',
                     'posts_per_page' => -1
@@ -30,8 +30,8 @@ if (!defined('ABSPATH')) exit;
             <p style="font-size:28px; font-weight:bold; margin:0;">
                 <?php
                 $completed_tasks = new WP_Query([
-                    'post_type' => 'wppm_task',
-                    'meta_key'  => '_wppm_task_status',
+                    'post_type' => 'pmp_task',
+                    'meta_key'  => '_pmp_task_status',
                     'meta_value'=> 'completed',
                     'fields' => 'ids',
                     'posts_per_page' => -1
@@ -47,8 +47,8 @@ if (!defined('ABSPATH')) exit;
             <p style="font-size:28px; font-weight:bold; margin:0;">
                 <?php
                 $pending_tasks = new WP_Query([
-                    'post_type' => 'wppm_task',
-                    'meta_key'  => '_wppm_task_status',
+                    'post_type' => 'pmp_task',
+                    'meta_key'  => '_pmp_task_status',
                     'meta_value'=> 'pending',
                     'fields' => 'ids',
                     'posts_per_page' => -1
@@ -78,8 +78,8 @@ if (!defined('ABSPATH')) exit;
                 <?php
                 // 1. Get all running projects
                 $running_projects = new WP_Query([
-                    'post_type' => 'wppm_project',
-                    'meta_key' => '_wppm_project_status',
+                    'post_type' => 'pmp_project',
+                    'meta_key' => '_pmp_project_status',
                     'meta_value' => 'in_progress',
                     'posts_per_page' => -1,
                     'fields' => 'ids'
@@ -88,11 +88,11 @@ if (!defined('ABSPATH')) exit;
                 if (!empty($running_projects->posts)):
                     // 2. Fetch all tasks for these projects in one query
                     $all_tasks_query = new WP_Query([
-                        'post_type' => 'wppm_task',
+                        'post_type' => 'pmp_task',
                         'posts_per_page' => -1,
                         'meta_query' => [
                             [
-                                'key' => '_wppm_related_project',
+                                'key' => '_pmp_related_project',
                                 'value' => $running_projects->posts,
                                 'compare' => 'IN'
                             ]
@@ -103,13 +103,13 @@ if (!defined('ABSPATH')) exit;
                     if ($all_tasks_query->have_posts()) {
                         while ($all_tasks_query->have_posts()) {
                             $all_tasks_query->the_post();
-                            $proj_id = get_post_meta(get_the_ID(), '_wppm_related_project', true);
+                            $proj_id = get_post_meta(get_the_ID(), '_pmp_related_project', true);
                             $tasks_by_project[$proj_id][] = [
                                 'id' => get_the_ID(),
-                                'status' => get_post_meta(get_the_ID(), '_wppm_task_status', true),
-                                'priority' => get_post_meta(get_the_ID(), '_wppm_task_priority', true),
-                                'due_date' => get_post_meta(get_the_ID(), '_wppm_task_due_date', true),
-                                'assigned' => get_post_meta(get_the_ID(), '_wppm_task_assigned', true),
+                                'status' => get_post_meta(get_the_ID(), '_pmp_task_status', true),
+                                'priority' => get_post_meta(get_the_ID(), '_pmp_task_priority', true),
+                                'due_date' => get_post_meta(get_the_ID(), '_pmp_task_due_date', true),
+                                'assigned' => get_post_meta(get_the_ID(), '_pmp_task_assigned', true),
                                 'title' => get_the_title()
                             ];
                         }
@@ -117,9 +117,9 @@ if (!defined('ABSPATH')) exit;
                     }
 
                     foreach ($running_projects->posts as $proj_id):
-                        $proj_status = get_post_meta($proj_id,'_wppm_project_status',true);
-                        $proj_priority = get_post_meta($proj_id,'_wppm_project_priority',true);
-                        $proj_manager_id = get_post_meta($proj_id,'_wppm_project_assigned',true);
+                        $proj_status = get_post_meta($proj_id,'_pmp_project_status',true);
+                        $proj_priority = get_post_meta($proj_id,'_pmp_project_priority',true);
+                        $proj_manager_id = get_post_meta($proj_id,'_pmp_project_assigned',true);
                         $proj_manager = $proj_manager_id ? get_userdata($proj_manager_id) : null;
                         $proj_tasks = $tasks_by_project[$proj_id] ?? [];
 
@@ -129,7 +129,7 @@ if (!defined('ABSPATH')) exit;
                         $running = count(array_filter($proj_tasks, fn($t)=> $t['status']==='in_progress'));
                         $pending = count(array_filter($proj_tasks, fn($t)=> $t['status']==='pending'));
                         $percent = $total > 0 ? round(($completed/$total)*100) : 0;
-                        $due_date = get_post_meta($proj_id,'_wppm_project_due_date',true);
+                        $due_date = get_post_meta($proj_id,'_pmp_project_due_date',true);
                 ?>
                         <tr style="background:#f9f9f9;">
                             <td style="padding:10px; border:1px solid #ddd;">
@@ -140,14 +140,14 @@ if (!defined('ABSPATH')) exit;
                                 <?php echo $proj_manager ? esc_html($proj_manager->display_name) : '—'; ?>
                             </td>
                             <td style="padding:10px; border:1px solid #ddd;">
-                                <span class="wppm-badge wppm-status-<?php echo esc_attr($proj_status); ?>"><?php echo esc_html(ucfirst($proj_status)); ?></span>
+                                <span class="pmp-badge pmp-status-<?php echo esc_attr($proj_status); ?>"><?php echo esc_html(ucfirst($proj_status)); ?></span>
                             </td>
                             <td style="padding:10px; border:1px solid #ddd;">
-                                <span class="wppm-badge wppm-priority-<?php echo esc_attr($proj_priority); ?>"><?php echo esc_html(ucfirst($proj_priority)); ?></span>
+                                <span class="pmp-badge pmp-priority-<?php echo esc_attr($proj_priority); ?>"><?php echo esc_html(ucfirst($proj_priority)); ?></span>
                             </td>
                             <td style="padding:10px; border:1px solid #ddd; width:220px;">
                                 <div style="background:#ddd; border-radius:6px; overflow:hidden; height:20px;">
-                                    <div class="wppm-progress-bar" data-percent="<?php echo esc_attr($percent); ?>" style="width:<?php echo esc_attr($percent); ?>%; height:100%; background:#4caf50; text-align:center; color:white;"><?php echo esc_html($percent); ?>%</div>
+                                    <div class="pmp-progress-bar" data-percent="<?php echo esc_attr($percent); ?>" style="width:<?php echo esc_attr($percent); ?>%; height:100%; background:#4caf50; text-align:center; color:white;"><?php echo esc_html($percent); ?>%</div>
                                 </div>
                             </td>
                             <td style="padding:10px; border:1px solid #ddd;">
@@ -155,7 +155,7 @@ if (!defined('ABSPATH')) exit;
                             </td>
                             <td style="padding:10px; border:1px solid #ddd;">
                                 <?php if($due_date): ?>
-                                    <span class="wppm-countdown" data-due="<?php echo esc_attr($due_date); ?>" data-status="<?php echo esc_attr($proj_status); ?>"></span>
+                                    <span class="pmp-countdown" data-due="<?php echo esc_attr($due_date); ?>" data-status="<?php echo esc_attr($proj_status); ?>"></span>
                                 <?php else: ?> — <?php endif; ?>
                             </td>
                         </tr>
@@ -182,15 +182,15 @@ if (!defined('ABSPATH')) exit;
                                                     <td style="padding:6px; border:1px solid #ddd;"><?php echo esc_html($task['title']); ?></td>
                                                     <td style="padding:6px; border:1px solid #ddd;"><?php echo $assigned_user ? esc_html($assigned_user->display_name) : '—'; ?></td>
                                                     <td style="padding:6px; border:1px solid #ddd;">
-                                                        <span class="wppm-badge wppm-status-<?php echo esc_attr($task['status']); ?>"><?php echo esc_html(ucfirst($task['status'])); ?></span>
+                                                        <span class="pmp-badge pmp-status-<?php echo esc_attr($task['status']); ?>"><?php echo esc_html(ucfirst($task['status'])); ?></span>
                                                     </td>
                                                     <td style="padding:6px; border:1px solid #ddd;">
-                                                        <span class="wppm-badge wppm-priority-<?php echo esc_attr($task['priority']); ?>"><?php echo esc_html(ucfirst($task['priority'])); ?></span>
+                                                        <span class="pmp-badge pmp-priority-<?php echo esc_attr($task['priority']); ?>"><?php echo esc_html(ucfirst($task['priority'])); ?></span>
                                                     </td>
                                                     <td style="padding:6px; border:1px solid #ddd;"><?php echo $task['due_date'] ? esc_html($task['due_date']) : '—'; ?></td>
                                                     <td style="padding:6px; border:1px solid #ddd;">
                                                         <?php if($task['due_date']): ?>
-                                                            <span class="wppm-countdown" data-due="<?php echo esc_attr($task['due_date']); ?>" data-status="<?php echo esc_attr($task['status']); ?>"></span>
+                                                            <span class="pmp-countdown" data-due="<?php echo esc_attr($task['due_date']); ?>" data-status="<?php echo esc_attr($task['status']); ?>"></span>
                                                         <?php else: ?> — <?php endif; ?>
                                                     </td>
                                                 </tr>

@@ -27,7 +27,7 @@ jQuery(document).ready(function($){
         if(totalHours <= 1) $elem.css({'background':'#f44336','color':'#fff','padding':'2px 6px','border-radius':'4px'});
     }
 
-    $('.wppm-countdown').each(function(){
+    $('.pmp-countdown').each(function(){
         var $this = $(this);
         updateCountdown($this);
         setInterval(function(){ updateCountdown($this); }, 1000);

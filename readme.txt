@@ -1,17 +1,17 @@
-=== WP Project Manager ===
+=== Project Manager Pro ===
 Contributors: delower186
-Tags: task manager, project tracker, wp-project-manager, productivity
+Tags: task manager, project manager pro, wp-project-manager, productivity
 Requires at least: 6.4
 Tested up to: 6.8
 Requires PHP: 7.2.24
-Stable tag: 1.0.0
+Stable tag: 1.0.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
 A simple WordPress plugin to manage projects and tasks directly from your WordPress dashboard.
 
 == Description ==
-WP Project Manager is a lightweight and easy-to-use plugin that allows you to create, manage, and track projects and tasks directly within WordPress. 
+Project Manager Pro is a lightweight and easy-to-use plugin that allows you to create, manage, and track projects and tasks directly within WordPress. 
 
 Key Features:
 * Create and manage projects
@@ -20,35 +20,35 @@ Key Features:
 * Built-in dashboard integration
 * Simple and intuitive interface
 
-WP Project Manager is perfect for freelancers, small teams, or anyone who wants to manage projects directly from their WordPress admin panel without needing external tools.
+Project Manager Pro is perfect for freelancers, small teams, or anyone who wants to manage projects directly from their WordPress admin panel without needing external tools.
 
 == Installation ==
 1. Upload the `wp-project-manager` folder to the `/wp-content/plugins/` directory.
 2. Activate the plugin through the 'Plugins' menu in WordPress.
-3. You will see a new menu called **WP Project Manager** in your WordPress admin sidebar.
+3. You will see a new menu called **Project Manager Pro** in your WordPress admin sidebar.
 4. Start adding Projects and Tasks.
 
 == Frequently Asked Questions ==
 
 = Can I manage tasks from the frontend? =
-Currently, WP Project Manager works in the admin dashboard. Frontend functionality is coming in future versions.
+Currently, Project Manager Pro works in the admin dashboard. Frontend functionality is coming in future versions.
 
 = Can I link multiple tasks to a single project? =
 Yes, each task can be linked to a project using the meta box in the task editor.
 
 == Screenshots ==
-1. Admin menu showing WP Project Manager with Projects and Tasks submenus.
+1. Admin menu showing Project Manager Pro with Projects and Tasks submenus.
 2. Project editor screen.
 3. Task editor screen with Project selection.
 
 == Changelog ==
-= 1.0.0 =
+= 1.0.2 =
 * Initial release with Projects and Tasks custom post types.
 * Admin menus created with Projects and Tasks as submenus.
 * Tasks can be linked to Projects via meta box.
 
 == Upgrade Notice ==
-= 1.0.0 =
+= 1.0.2 =
 Initial release.
 
 == License ==

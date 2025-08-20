@@ -1,8 +1,8 @@
-.wppm-countdown {
+.pmp-countdown {
     font-weight: bold;
     transition: all 0.5s ease;
 }
-.wppm-countdown[style*="red"] {
+.pmp-countdown[style*="red"] {
     animation: pulse 1s infinite;
 }
 @keyframes pulse {

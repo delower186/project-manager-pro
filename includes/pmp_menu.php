@@ -1,44 +1,44 @@
 <?php 
 if (!defined('ABSPATH')) exit;
 // Admin Menu
-function wppm_admin_menu() {
+function pmp_admin_menu() {
     // Top-level Dashboard menu
     add_menu_page(
-        'WP Project Manager',      // Page title
-        'WP Project Manager',      // Menu title
+        'Project Manager Pro',      // Page title
+        'Project Manager Pro',      // Menu title
         'manage_options',          // Capability
-        'wppm_dashboard',          // Menu slug
-        'wppm_dashboard_page',     // Callback
+        'pmp_dashboard',          // Menu slug
+        'pmp_dashboard_page',     // Callback
         'dashicons-clipboard',     // Icon
         6                          // Position
     );
 
     // Submenus
     add_submenu_page(
-        'wppm_dashboard',
+        'pmp_dashboard',
         'Projects',
         'Projects',
         'manage_options',
-        'edit.php?post_type=wppm_project'
+        'edit.php?post_type=pmp_project'
     );
 
     add_submenu_page(
-        'wppm_dashboard',
+        'pmp_dashboard',
         'Tasks',
         'Tasks',
         'manage_options',
-        'edit.php?post_type=wppm_task'
+        'edit.php?post_type=pmp_task'
     );
 }
-add_action('admin_menu', 'wppm_admin_menu');
+add_action('admin_menu', 'pmp_admin_menu');
 
 // No redirect for parent menu — now dashboard loads
 
 
 // Dashboard Page Callback
-function wppm_dashboard_page() {
+function pmp_dashboard_page() {
     // Load Dashboard Page
-    require_once WPPM_PLUGIN_DIR_PATH . 'includes/dashboard.php';
+    require_once PMP_PLUGIN_DIR_PATH . 'includes/pmp_dashboard.php';
 }
 
 
