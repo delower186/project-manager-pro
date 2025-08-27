@@ -1,0 +1,13 @@
+      .ui-dialog .ui-dialog-content.pmp-modal {
+        max-height: calc(100vh - 160px) !important;
+        overflow-y: auto !important;
+        padding-right: 10px;
+      }
+      #pmp-comments {
+        max-height: 40vh;
+        overflow-y: auto;
+        border: 1px solid #ddd;
+        padding: 8px;
+        background: #fff;
+      }
+      .pmp-comment { margin-bottom: 10px; }

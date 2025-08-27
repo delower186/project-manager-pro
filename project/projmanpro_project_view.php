@@ -5,10 +5,10 @@ if (!defined('ABSPATH')) exit;
  * AJAX: Quick View Modal (Projects)
  * =============================
  */
-add_action('wp_ajax_pmp_project_quick_view', function() {
+add_action('wp_ajax_projmanpro_project_quick_view', function() {
     // Sanitize and validate nonce
-    $nonce = isset($_POST['pmp_nonce']) ? sanitize_text_field(wp_unslash($_POST['pmp_nonce'])) : '';
-    if (! wp_verify_nonce($nonce, 'pmp_action')) {
+    $nonce = isset($_POST['projmanpro_nonce']) ? sanitize_text_field(wp_unslash($_POST['projmanpro_nonce'])) : '';
+    if (! wp_verify_nonce($nonce, 'projmanpro_action')) {
         wp_send_json_error(['message' => 'Security check failed'], 400);
     }
 
@@ -17,15 +17,15 @@ add_action('wp_ajax_pmp_project_quick_view', function() {
     if (!$post_id) wp_send_json_error(['message' => 'Invalid project ID'], 400);
 
     $post = get_post($post_id);
-    if (!$post || $post->post_type !== 'pmp_project') {
+    if (!$post || $post->post_type !== 'projmanpro_project') {
         wp_send_json_error(['message' => 'Project not found'], 404);
     }
 
     // Meta fields
-    $status       = get_post_meta($post_id, '_pmp_project_status', true) ?: 'Pending';
-    $priority     = get_post_meta($post_id, '_pmp_project_priority', true) ?: 'Normal';
-    $due_date     = get_post_meta($post_id, '_pmp_project_due_date', true) ?: '—';
-    $assignee_id  = get_post_meta($post_id, '_pmp_project_assigned', true);
+    $status       = get_post_meta($post_id, '_projmanpro_project_status', true) ?: 'Pending';
+    $priority     = get_post_meta($post_id, '_projmanpro_project_priority', true) ?: 'Normal';
+    $due_date     = get_post_meta($post_id, '_projmanpro_project_due_date', true) ?: '—';
+    $assignee_id  = get_post_meta($post_id, '_projmanpro_project_assigned', true);
     $assignee_name= $assignee_id ? get_the_author_meta('display_name', $assignee_id) : '—';
     $content      = apply_filters('the_content', $post->post_content);
 
@@ -64,9 +64,9 @@ add_action('wp_ajax_pmp_project_quick_view', function() {
             ?>
             <form id="pmp-comment-form">
                 <textarea name="comment" rows="3" style="width:100%;" required></textarea>
-                <input type="hidden" name="action" value="pmp_project_add_comment" />
+                <input type="hidden" name="action" value="projmanpro_project_add_comment" />
                 <input type="hidden" name="post_id" value="<?php echo esc_attr($post_id); ?>" />
-                <input type="hidden" name="nonce" value="<?php echo esc_attr(wp_create_nonce('pmp_action')); ?>" />
+                <input type="hidden" name="nonce" value="<?php echo esc_attr(wp_create_nonce('projmanpro_action')); ?>" />
                 <button type="submit" class="button button-primary">Post Comment</button>
             </form>
         </div>
@@ -81,83 +81,29 @@ add_action('wp_ajax_pmp_project_quick_view', function() {
  * Admin Footer JS (Projects list screen)
  * =============================
  */
-add_action('admin_footer-edit.php', function() {
+add_action('admin_enqueue_scripts', function() {
     $screen = get_current_screen();
-    if ($screen->post_type !== 'pmp_project') return;
-    ?>
-    <script>
-        // escape nonce
-        var pmp_nonce = <?php echo wp_json_encode(wp_create_nonce('pmp_action')); ?>;
-        jQuery(document).ready(function($){
-            // Add clickable class to rows
-            $('#the-list tr').each(function(){
-                var post_id = $(this).attr('id');
-                if(post_id){
-                    post_id = post_id.replace('post-', '');
-                    $(this).attr('data-post-id', post_id).addClass('pmp-clickable');
-                }
-            });
+    if ($screen->post_type !== 'projmanpro_project') return;
 
-            // Quick view modal
-            $('#the-list').on('click', 'tr.pmp-clickable', function(e){
-                if($(e.target).closest('th, td:first-child, td:nth-child(2)').length) return;
+    wp_enqueue_script(
+        'projmanpro_project_modal_popup', // Unique handle for your script
+        PROJMANPRO_DIR_URL .'assets/js/projmanpro_project_modal_popup.js', // Path to your script file
+        array('jquery'), // Dependencies (e.g., jQuery)
+        '1.0', // Version number
+        true // Load in footer (set to true)
+    );
 
-                var post_id = $(this).data('post-id');
-                if(!post_id) return;
+    // escape nonce
+    wp_add_inline_script('projmanpro_project_modal_popup','var projmanpro_nonce =' . wp_json_encode(wp_create_nonce('projmanpro_action')), 'before');
 
-                $.post(ajaxurl, {
-                    action: 'pmp_project_quick_view',
-                    post_id: post_id,
-                    pmp_nonce: pmp_nonce
-                }, function(response){
-                    if(response.success){
-                        $('<div class="pmp-modal"></div>').html(response.data).dialog({
-                            modal: true,
-                            width: 700,
-                            title: 'Project Details',
-                            open: function () {
-                                var maxH = Math.floor(window.innerHeight * 0.8);
-                                $(this).css({ maxHeight: maxH + 'px', overflowY: 'auto' });
-                            },
-                            close: function() { $(this).dialog('destroy').remove(); }
-                        });
-                    } else {
-                        alert('Failed to load project details.');
-                    }
-                });
-            });
+    wp_enqueue_style(
+        'projmanpro_project_modal_popup', // Unique handle for your style
+        PROJMANPRO_DIR_URL .'assets/css/projmanpro_project_modal_popup.css', // Path to your style file
+        false, // Dependencies
+        '1.0', // Version number
+        true // Load in footer (set to true)
+    );
 
-            // Handle AJAX comment submit
-            $(document).on('submit', '#pmp-comment-form', function(e){
-                e.preventDefault();
-                var form = $(this);
-                $.post(ajaxurl, form.serialize(), function(response){
-                    if(response.success){
-                        $('#pmp-comments h3').after(response.data.html);
-                        form[0].reset();
-                    } else {
-                        alert(response.data);
-                    }
-                });
-            });
-        });
-    </script>
-    <style>
-      .ui-dialog .ui-dialog-content.pmp-modal {
-        max-height: calc(100vh - 160px) !important;
-        overflow-y: auto !important;
-        padding-right: 10px;
-      }
-      #pmp-comments {
-        max-height: 40vh;
-        overflow-y: auto;
-        border: 1px solid #ddd;
-        padding: 8px;
-        background: #fff;
-      }
-      .pmp-comment { margin-bottom: 10px; }
-    </style>
-    <?php
 });
 
 
@@ -166,9 +112,9 @@ add_action('admin_footer-edit.php', function() {
  * AJAX: Add Comment
  * =============================
  */
-add_action('wp_ajax_pmp_project_add_comment', function() {
+add_action('wp_ajax_projmanpro_project_add_comment', function() {
     $nonce = isset($_POST['nonce']) ? sanitize_text_field(wp_unslash($_POST['nonce'])) : '';
-    if (! wp_verify_nonce($nonce, 'pmp_action')) {
+    if (! wp_verify_nonce($nonce, 'projmanpro_action')) {
         wp_send_json_error(['message' => 'Security check failed']);
     }
 
@@ -208,13 +154,13 @@ add_action('wp_ajax_pmp_project_add_comment', function() {
 
 /**
  * =============================
- * Disable moderation for pmp_project CPT comments
+ * Disable moderation for projmanpro_project CPT comments
  * =============================
  */
 add_filter('pre_comment_approved', function($approved, $commentdata) {
     if (isset($commentdata['comment_post_ID'])) {
         $post_type = get_post_type($commentdata['comment_post_ID']);
-        if ($post_type === 'pmp_project') {
+        if ($post_type === 'projmanpro_project') {
             return 1;
         }
     }

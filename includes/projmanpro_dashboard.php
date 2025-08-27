@@ -11,10 +11,11 @@ if (!defined('ABSPATH')) exit;
             <h2>Total Completed Projects</h2>
             <p style="font-size:28px; font-weight:bold; margin:0;">
                 <?php
-                $completed_projects_count = wp_count_posts('pmp_project')->publish;
+                $count = wp_count_posts('projmanpro_project');
+                $completed_projects_count = ( isset($count->publish) ) ? (int) $count->publish : 0;
                 $completed_projects = new WP_Query([
-                    'post_type' => 'pmp_project',
-                    'meta_key' => '_pmp_project_status',
+                    'post_type' => 'projmanpro_project',
+                    'meta_key' => '_projmanpro_project_status',
                     'meta_value' => 'completed',
                     'fields' => 'ids',
                     'posts_per_page' => -1
@@ -30,8 +31,8 @@ if (!defined('ABSPATH')) exit;
             <p style="font-size:28px; font-weight:bold; margin:0;">
                 <?php
                 $completed_tasks = new WP_Query([
-                    'post_type' => 'pmp_task',
-                    'meta_key'  => '_pmp_task_status',
+                    'post_type' => 'projmanpro_task',
+                    'meta_key'  => '_projmanpro_task_status',
                     'meta_value'=> 'completed',
                     'fields' => 'ids',
                     'posts_per_page' => -1
@@ -47,8 +48,8 @@ if (!defined('ABSPATH')) exit;
             <p style="font-size:28px; font-weight:bold; margin:0;">
                 <?php
                 $pending_tasks = new WP_Query([
-                    'post_type' => 'pmp_task',
-                    'meta_key'  => '_pmp_task_status',
+                    'post_type' => 'projmanpro_task',
+                    'meta_key'  => '_projmanpro_task_status',
                     'meta_value'=> 'pending',
                     'fields' => 'ids',
                     'posts_per_page' => -1
@@ -78,8 +79,8 @@ if (!defined('ABSPATH')) exit;
                 <?php
                 // 1. Get all running projects
                 $running_projects = new WP_Query([
-                    'post_type' => 'pmp_project',
-                    'meta_key' => '_pmp_project_status',
+                    'post_type' => 'projmanpro_project',
+                    'meta_key' => '_projmanpro_project_status',
                     'meta_value' => 'in_progress',
                     'posts_per_page' => -1,
                     'fields' => 'ids'
@@ -88,11 +89,11 @@ if (!defined('ABSPATH')) exit;
                 if (!empty($running_projects->posts)):
                     // 2. Fetch all tasks for these projects in one query
                     $all_tasks_query = new WP_Query([
-                        'post_type' => 'pmp_task',
+                        'post_type' => 'projmanpro_task',
                         'posts_per_page' => -1,
                         'meta_query' => [
                             [
-                                'key' => '_pmp_related_project',
+                                'key' => '_projmanpro_related_project',
                                 'value' => $running_projects->posts,
                                 'compare' => 'IN'
                             ]
@@ -103,13 +104,13 @@ if (!defined('ABSPATH')) exit;
                     if ($all_tasks_query->have_posts()) {
                         while ($all_tasks_query->have_posts()) {
                             $all_tasks_query->the_post();
-                            $proj_id = get_post_meta(get_the_ID(), '_pmp_related_project', true);
+                            $proj_id = get_post_meta(get_the_ID(), '_projmanpro_related_project', true);
                             $tasks_by_project[$proj_id][] = [
                                 'id' => get_the_ID(),
-                                'status' => get_post_meta(get_the_ID(), '_pmp_task_status', true),
-                                'priority' => get_post_meta(get_the_ID(), '_pmp_task_priority', true),
-                                'due_date' => get_post_meta(get_the_ID(), '_pmp_task_due_date', true),
-                                'assigned' => get_post_meta(get_the_ID(), '_pmp_task_assigned', true),
+                                'status' => get_post_meta(get_the_ID(), '_projmanpro_task_status', true),
+                                'priority' => get_post_meta(get_the_ID(), '_projmanpro_task_priority', true),
+                                'due_date' => get_post_meta(get_the_ID(), '_projmanpro_task_due_date', true),
+                                'assigned' => get_post_meta(get_the_ID(), '_projmanpro_task_assigned', true),
                                 'title' => get_the_title()
                             ];
                         }
@@ -117,9 +118,9 @@ if (!defined('ABSPATH')) exit;
                     }
 
                     foreach ($running_projects->posts as $proj_id):
-                        $proj_status = get_post_meta($proj_id,'_pmp_project_status',true);
-                        $proj_priority = get_post_meta($proj_id,'_pmp_project_priority',true);
-                        $proj_manager_id = get_post_meta($proj_id,'_pmp_project_assigned',true);
+                        $proj_status = get_post_meta($proj_id,'_projmanpro_project_status',true);
+                        $proj_priority = get_post_meta($proj_id,'_projmanpro_project_priority',true);
+                        $proj_manager_id = get_post_meta($proj_id,'_projmanpro_project_assigned',true);
                         $proj_manager = $proj_manager_id ? get_userdata($proj_manager_id) : null;
                         $proj_tasks = $tasks_by_project[$proj_id] ?? [];
 
@@ -129,7 +130,7 @@ if (!defined('ABSPATH')) exit;
                         $running = count(array_filter($proj_tasks, fn($t)=> $t['status']==='in_progress'));
                         $pending = count(array_filter($proj_tasks, fn($t)=> $t['status']==='pending'));
                         $percent = $total > 0 ? round(($completed/$total)*100) : 0;
-                        $due_date = get_post_meta($proj_id,'_pmp_project_due_date',true);
+                        $due_date = get_post_meta($proj_id,'_projmanpro_project_due_date',true);
                 ?>
                         <tr style="background:#f9f9f9;">
                             <td style="padding:10px; border:1px solid #ddd;">

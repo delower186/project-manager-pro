@@ -1,7 +1,7 @@
 <?php
 if (!defined('ABSPATH')) exit;
 // Register Projects CPT
-function pmp_register_project_cpt() {
+function projmanpro_register_project_cpt() {
     $labels = [
       'name' => __('Projects','project-manager-pro') ,
       'singular_name' => __('Project','project-manager-pro') ,
@@ -62,42 +62,42 @@ function pmp_register_project_cpt() {
         'template'              => array(),
         'template_lock'         => false,
     ];
-    register_post_type('pmp_project', $args);
+    register_post_type('projmanpro_project', $args);
 }
-add_action('init', 'pmp_register_project_cpt');
+add_action('init', 'projmanpro_register_project_cpt');
 
 // Add Meta Boxes for Projects
-function pmp_project_meta_boxes() {
-    add_meta_box('pmp_project_details', 'Project Details', 'pmp_project_meta_callback', 'pmp_project', 'normal', 'default');
+function projmanpro_project_meta_boxes() {
+    add_meta_box('projmanpro_project_details', 'Project Details', 'projmanpro_project_meta_callback', 'projmanpro_project', 'normal', 'default');
 }
-add_action('add_meta_boxes', 'pmp_project_meta_boxes');
+add_action('add_meta_boxes', 'projmanpro_project_meta_boxes');
 
-function pmp_project_meta_callback($post) {
+function projmanpro_project_meta_callback($post) {
     
-     wp_nonce_field('pmp_save_project_meta_action', 'pmp_project_meta_nonce');
+     wp_nonce_field('projmanpro_save_project_meta_action', 'projmanpro_project_meta_nonce');
 
-    $status    = get_post_meta($post->ID, '_pmp_project_status', true);
-    $priority  = get_post_meta($post->ID, '_pmp_project_priority', true);
-    $due_date  = get_post_meta($post->ID, '_pmp_project_due_date', true);
-    $assigned  = get_post_meta($post->ID, '_pmp_project_assigned', true);
+    $status    = get_post_meta($post->ID, '_projmanpro_project_status', true);
+    $priority  = get_post_meta($post->ID, '_projmanpro_project_priority', true);
+    $due_date  = get_post_meta($post->ID, '_projmanpro_project_due_date', true);
+    $assigned  = get_post_meta($post->ID, '_projmanpro_project_assigned', true);
 
     // Get users
     $users = get_users();
 
     // Check if project has incomplete tasks
     $incomplete_tasks = new WP_Query([
-        'post_type'      => 'pmp_task',
+        'post_type'      => 'projmanpro_task',
         'posts_per_page' => 1,
         'fields'         => 'ids', // ✅ Faster, only fetch IDs
         'meta_query'     => [
             'relation' => 'AND',
             [
-                'key'   => '_pmp_related_project',
+                'key'   => '_projmanpro_related_project',
                 'value' => $post->ID,
                 'compare' => '='
             ],
             [
-                'key'     => '_pmp_task_status',
+                'key'     => '_projmanpro_task_status',
                 'value'   => ['pending', 'in_progress'],
                 'compare' => 'IN'
             ]
@@ -111,7 +111,7 @@ function pmp_project_meta_callback($post) {
     ?>
     <p>
         <label>Status:</label><br>
-        <select name="pmp_project_status">
+        <select name="projmanpro_project_status">
             <option value="pending" <?php selected($status, 'pending'); ?>>Pending</option>
             <option value="in_progress" <?php selected($status, 'in_progress'); ?>>In Progress</option>
             <option value="completed" <?php selected($status, 'completed'); ?> <?php echo esc_html($disable_completed); ?>>
@@ -122,7 +122,7 @@ function pmp_project_meta_callback($post) {
 
     <p>
         <label>Priority:</label><br>
-        <select name="pmp_project_priority">
+        <select name="projmanpro_project_priority">
             <option value="low" <?php selected($priority, 'low'); ?>>Low</option>
             <option value="medium" <?php selected($priority, 'medium'); ?>>Medium</option>
             <option value="high" <?php selected($priority, 'high'); ?>>High</option>
@@ -131,12 +131,12 @@ function pmp_project_meta_callback($post) {
 
     <p>
         <label>Due Date:</label><br>
-        <input type="date" name="pmp_project_due_date" value="<?php echo esc_attr($due_date); ?>">
+        <input type="date" name="projmanpro_project_due_date" value="<?php echo esc_attr($due_date); ?>">
     </p>
 
     <p>
         <label>Assigned User:</label><br>
-        <select name="pmp_project_assigned">
+        <select name="projmanpro_project_assigned">
             <option value="">-- Select User --</option>
             <?php foreach ($users as $user): ?>
                 <option value="<?php echo esc_attr($user->ID); ?>" <?php selected($assigned, $user->ID); ?>>
@@ -149,10 +149,10 @@ function pmp_project_meta_callback($post) {
 }
 
 
-function pmp_save_project_meta($post_id) {
+function projmanpro_save_project_meta($post_id) {
     // 1. Check nonce
-    if (!isset($_POST['pmp_project_meta_nonce']) ||
-        !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['pmp_project_meta_nonce'])), 'pmp_save_project_meta_action')) {
+    if (!isset($_POST['projmanpro_project_meta_nonce']) ||
+        !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['projmanpro_project_meta_nonce'])), 'projmanpro_save_project_meta_action')) {
         return;
     }
 
@@ -167,27 +167,27 @@ function pmp_save_project_meta($post_id) {
     }
 
     // 4. Process & sanitize fields
-    if (isset($_POST['pmp_project_status'])) {
-        update_post_meta($post_id, '_pmp_project_status', sanitize_text_field(wp_unslash($_POST['pmp_project_status'])));
+    if (isset($_POST['projmanpro_project_status'])) {
+        update_post_meta($post_id, '_projmanpro_project_status', sanitize_text_field(wp_unslash($_POST['projmanpro_project_status'])));
     }
-    if (isset($_POST['pmp_project_priority'])) {
-        update_post_meta($post_id, '_pmp_project_priority', sanitize_text_field(wp_unslash($_POST['pmp_project_priority'])));
+    if (isset($_POST['projmanpro_project_priority'])) {
+        update_post_meta($post_id, '_projmanpro_project_priority', sanitize_text_field(wp_unslash($_POST['projmanpro_project_priority'])));
     }
-    if (isset($_POST['pmp_project_due_date'])) {
-        update_post_meta($post_id, '_pmp_project_due_date', sanitize_text_field(wp_unslash($_POST['pmp_project_due_date'])));
+    if (isset($_POST['projmanpro_project_due_date'])) {
+        update_post_meta($post_id, '_projmanpro_project_due_date', sanitize_text_field(wp_unslash($_POST['projmanpro_project_due_date'])));
     }
-    if (isset($_POST['pmp_project_assigned'])) {
-        update_post_meta($post_id, '_pmp_project_assigned', intval($_POST['pmp_project_assigned']));
+    if (isset($_POST['projmanpro_project_assigned'])) {
+        update_post_meta($post_id, '_projmanpro_project_assigned', intval($_POST['projmanpro_project_assigned']));
     }
 }
-add_action('save_post', 'pmp_save_project_meta');
+add_action('save_post', 'projmanpro_save_project_meta');
 
 
 
 
 // custom columns
 // Add columns to Projects list
-function pmp_project_columns($columns) {
+function projmanpro_project_columns($columns) {
     $columns['status']   = 'Status';
     $columns['priority'] = 'Priority';
     $columns['due_date'] = 'Due Date';
@@ -195,13 +195,13 @@ function pmp_project_columns($columns) {
     $columns['countdown'] = 'Time Left';
     return $columns;
 }
-add_filter('manage_pmp_project_posts_columns', 'pmp_project_columns');
+add_filter('manage_projmanpro_project_posts_columns', 'projmanpro_project_columns');
 
 // Render column values for Projects with color badges
-function pmp_project_column_content($column, $post_id) {
+function projmanpro_project_column_content($column, $post_id) {
     switch ($column) {
         case 'status':
-            $status = get_post_meta($post_id, '_pmp_project_status', true);
+            $status = get_post_meta($post_id, '_projmanpro_project_status', true);
             $color = 'gray';
             if ($status === 'pending') $color = '#ff9800';
             elseif ($status === 'in_progress') $color = '#2196f3';
@@ -210,7 +210,7 @@ function pmp_project_column_content($column, $post_id) {
             break;
 
         case 'priority':
-            $priority = get_post_meta($post_id, '_pmp_project_priority', true);
+            $priority = get_post_meta($post_id, '_projmanpro_project_priority', true);
             $color = 'gray';
             if ($priority === 'low') $color = '#4caf50';
             elseif ($priority === 'medium') $color = '#ff9800';
@@ -219,18 +219,18 @@ function pmp_project_column_content($column, $post_id) {
             break;
 
         case 'due_date':
-            echo esc_html(get_post_meta($post_id, '_pmp_project_due_date', true));
+            echo esc_html(get_post_meta($post_id, '_projmanpro_project_due_date', true));
             break;
 
         case 'assigned':
-            $user_id = get_post_meta($post_id, '_pmp_project_assigned', true);
+            $user_id = get_post_meta($post_id, '_projmanpro_project_assigned', true);
             $user    = $user_id ? get_userdata($user_id) : null;
             echo $user ? esc_html($user->display_name) : '—';
             break;
 
         case 'countdown':
-            $due_date = get_post_meta($post_id, '_pmp_project_due_date', true);
-            $status   = get_post_meta($post_id,'_pmp_project_status',true);
+            $due_date = get_post_meta($post_id, '_projmanpro_project_due_date', true);
+            $status   = get_post_meta($post_id,'_projmanpro_project_status',true);
             $color = 'gray';
             if ($status === 'pending') $color = '#ff9800';
             elseif ($status === 'in_progress') $color = '#2196f3';
@@ -244,58 +244,58 @@ function pmp_project_column_content($column, $post_id) {
             break;
     }
 }
-add_action('manage_pmp_project_posts_custom_column', 'pmp_project_column_content', 10, 2);
+add_action('manage_projmanpro_project_posts_custom_column', 'projmanpro_project_column_content', 10, 2);
 
 
 
 // Make Projects Columns Sortable
 // Make columns sortable in Projects table
-function pmp_project_sortable_columns($columns) {
+function projmanpro_project_sortable_columns($columns) {
     $columns['status']   = 'status';
     $columns['priority'] = 'priority';
     $columns['due_date'] = 'due_date';
     $columns['assigned'] = 'assigned';
     return $columns;
 }
-add_filter('manage_edit-pmp_project_sortable_columns', 'pmp_project_sortable_columns');
+add_filter('manage_edit-projmanpro_project_sortable_columns', 'projmanpro_project_sortable_columns');
 
 // Handle sorting by meta
-function pmp_project_orderby($query) {
+function projmanpro_project_orderby($query) {
     if(!is_admin()) return;
 
     $orderby = $query->get('orderby');
 
     if($orderby == 'status') {
-        $query->set('meta_key', '_pmp_project_status');
+        $query->set('meta_key', '_projmanpro_project_status');
         $query->set('orderby', 'meta_value');
     }
     elseif($orderby == 'priority') {
-        $query->set('meta_key', '_pmp_project_priority');
+        $query->set('meta_key', '_projmanpro_project_priority');
         $query->set('orderby', 'meta_value');
     }
     elseif($orderby == 'due_date') {
-        $query->set('meta_key', '_pmp_project_due_date');
+        $query->set('meta_key', '_projmanpro_project_due_date');
         $query->set('orderby', 'meta_value');
     }
     elseif($orderby == 'assigned') {
-        $query->set('meta_key', '_pmp_project_assigned');
+        $query->set('meta_key', '_projmanpro_project_assigned');
         $query->set('orderby', 'meta_value_num');
     }
 }
-add_action('pre_get_posts', 'pmp_project_orderby');
+add_action('pre_get_posts', 'projmanpro_project_orderby');
 
 // Add Filters for Projects Table
 // Add dropdown filters above Projects table
-function pmp_project_filters() {
+function projmanpro_project_filters() {
     global $typenow;
-    if ($typenow !== 'pmp_project') {
+    if ($typenow !== 'projmanpro_project') {
         return;
     }
 
     // ✅ First verify nonce before reading $_GET
     $nonce_valid = (
-        isset($_GET['pmp_filter_nonce']) &&
-        wp_verify_nonce(sanitize_text_field(wp_unslash($_GET['pmp_filter_nonce'])), 'pmp_filter_projects')
+        isset($_GET['projmanpro_filter_nonce']) &&
+        wp_verify_nonce(sanitize_text_field(wp_unslash($_GET['projmanpro_filter_nonce'])), 'projmanpro_filter_projects')
     );
 
     // Status filter
@@ -306,11 +306,12 @@ function pmp_project_filters() {
     ];
 
     $current_status = '';
-    if ($nonce_valid && isset($_GET['_pmp_project_status'])) {
-        $current_status = sanitize_text_field(wp_unslash($_GET['_pmp_project_status']));
+    if ($nonce_valid && isset($_GET['_projmanpro_project_status'])) {
+        $current_status = sanitize_text_field(wp_unslash($_GET['_projmanpro_project_status']));
     }
 
-    echo '<select name="_pmp_project_status"><option value="">All Statuses</option>';
+    // Output dropdown
+    echo '<select name="_projmanpro_project_status"><option value="">All Statuses</option>';
     foreach ($statuses as $key => $label) {
         printf(
             '<option value="%s"%s>%s</option>',
@@ -325,11 +326,11 @@ function pmp_project_filters() {
     $users = get_users();
 
     $current_user = '';
-    if ($nonce_valid && isset($_GET['_pmp_project_assigned'])) {
-        $current_user = intval($_GET['_pmp_project_assigned']);
+    if ($nonce_valid && isset($_GET['_projmanpro_project_assigned'])) {
+        $current_user = intval($_GET['_projmanpro_project_assigned']);
     }
 
-    echo '<select name="_pmp_project_assigned"><option value="">All Users</option>';
+    echo '<select name="_projmanpro_project_assigned"><option value="">All Users</option>';
     foreach ($users as $user) {
         printf(
             '<option value="%d"%s>%s</option>',
@@ -341,22 +342,22 @@ function pmp_project_filters() {
     echo '</select>';
 
     // ✅ Add nonce field
-    wp_nonce_field('pmp_filter_projects', 'pmp_filter_nonce');
+    wp_nonce_field('projmanpro_filter_projects', 'projmanpro_filter_nonce');
 }
-add_action('restrict_manage_posts', 'pmp_project_filters');
+add_action('restrict_manage_posts', 'projmanpro_project_filters');
 
 
 
 // Filter query by selected status or assigned user
-function pmp_project_filter_query($query) {
+function projmanpro_project_filter_query($query) {
     global $pagenow, $typenow;
 
-    if ($typenow === 'pmp_project' && $pagenow === 'edit.php' && $query->is_main_query()) {
+    if ($typenow === 'projmanpro_project' && $pagenow === 'edit.php' && $query->is_main_query()) {
 
         // ✅ Verify nonce
         if (
-            !isset($_GET['pmp_filter_nonce']) ||
-            !wp_verify_nonce(sanitize_text_field(wp_unslash($_GET['pmp_filter_nonce'])), 'pmp_filter_projects')
+            !isset($_GET['projmanpro_filter_nonce']) ||
+            !wp_verify_nonce(sanitize_text_field(wp_unslash($_GET['projmanpro_filter_nonce'])), 'projmanpro_filter_projects')
         ) {
             return; // Nonce invalid → skip filtering
         }
@@ -364,19 +365,19 @@ function pmp_project_filter_query($query) {
         $meta_query = $query->get('meta_query') ?: [];
 
         // Status filter
-        if (!empty($_GET['_pmp_project_status'])) {
+        if (!empty($_GET['_projmanpro_project_status'])) {
             $meta_query[] = [
-                'key'     => '_pmp_project_status',
-                'value'   => sanitize_text_field(wp_unslash($_GET['_pmp_project_status'])),
+                'key'     => '_projmanpro_project_status',
+                'value'   => sanitize_text_field(wp_unslash($_GET['_projmanpro_project_status'])),
                 'compare' => '='
             ];
         }
 
         // Assigned User filter
-        if (!empty($_GET['_pmp_project_assigned'])) {
+        if (!empty($_GET['_projmanpro_project_assigned'])) {
             $meta_query[] = [
-                'key'     => '_pmp_project_assigned',
-                'value'   => intval($_GET['_pmp_project_assigned']),
+                'key'     => '_projmanpro_project_assigned',
+                'value'   => intval($_GET['_projmanpro_project_assigned']),
                 'compare' => '='
             ];
         }
@@ -386,16 +387,16 @@ function pmp_project_filter_query($query) {
         }
     }
 }
-add_action('pre_get_posts', 'pmp_project_filter_query');
+add_action('pre_get_posts', 'projmanpro_project_filter_query');
 
 
 
 
 // Remove Comments column from Project CPT list table
-function pmp_remove_project_comments_column($columns) {
+function projmanpro_remove_project_comments_column($columns) {
     if (isset($columns['comments'])) {
         unset($columns['comments']);
     }
     return $columns;
 }
-add_filter('manage_pmp_project_posts_columns', 'pmp_remove_project_comments_column');
+add_filter('manage_projmanpro_project_posts_columns', 'projmanpro_remove_project_comments_column');

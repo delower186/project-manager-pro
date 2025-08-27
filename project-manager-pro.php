@@ -3,7 +3,7 @@
 Plugin Name: Project Manager Pro
 Plugin URI: https://sandalia.com.bd/apps/project-manager-pro
 Description: Project Manager Pro helps teams manage projects, tasks, and deadlines directly from WordPress, enabling seamless collaboration and productivity.
-Version:1.0.2
+Version:1.0.3
 Author: Delower
 Author URI: https://github.com/delower186
 License: GPLv2 or later
@@ -31,13 +31,13 @@ Copyright (C) 2025  delower.
 // Exit if accessed directly
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define('PMP_PLUGIN_DIR_PATH', plugin_dir_path( __FILE__));
-define('PMP_PLUGIN_DIR_URL', plugin_dir_url( __FILE__));
+define('PROJMANPRO_DIR_PATH', plugin_dir_path( __FILE__));
+define('PROJMANPRO_DIR_URL', plugin_dir_url( __FILE__));
 
 // Include CPTs
-require_once PMP_PLUGIN_DIR_PATH . 'includes/pmp_enqueue.php';
-require_once PMP_PLUGIN_DIR_PATH . 'project/pmp_cpt_projects.php';
-require_once PMP_PLUGIN_DIR_PATH . 'task/pmp_cpt_tasks.php';
-require_once PMP_PLUGIN_DIR_PATH . 'includes/pmp_menu.php';
-require_once PMP_PLUGIN_DIR_PATH . 'project/pmp_project_view.php';
-require_once PMP_PLUGIN_DIR_PATH . 'task/pmp_task_view.php';
+require_once PROJMANPRO_DIR_PATH . 'includes/projmanpro_enqueue.php';
+require_once PROJMANPRO_DIR_PATH . 'project/projmanpro_cpt_projects.php';
+require_once PROJMANPRO_DIR_PATH . 'task/projmanpro_cpt_tasks.php';
+require_once PROJMANPRO_DIR_PATH . 'includes/projmanpro_menu.php';
+require_once PROJMANPRO_DIR_PATH . 'project/projmanpro_project_view.php';
+require_once PROJMANPRO_DIR_PATH . 'task/projmanpro_task_view.php';

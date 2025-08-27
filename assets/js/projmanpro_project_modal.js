@@ -18,9 +18,9 @@ jQuery(document).ready(function($){
         $modal.html('Loading...');
 
         $.post(ajaxurl, {
-            action: 'pmp_project_quick_view',
+            action: 'projmanpro_project_quick_view',
             post_id: post_id,
-            pmp_nonce: pmp_ajax.nonce
+            projmanpro_nonce: projmanpro_ajax.nonce
         }, function(response){
             if(response.success){
                 $modal.html(response.data);
