@@ -4,7 +4,7 @@ Tags: task manager, project manager pro, wp-project-manager, productivity
 Requires at least: 6.4
 Tested up to: 6.8
 Requires PHP: 7.2.24
-Stable tag: 1.0.3
+Stable tag: 1.0.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -42,6 +42,10 @@ Yes, each task can be linked to a project using the meta box in the task editor.
 3. Task editor screen with Project selection.
 
 == Changelog ==
+= 1.0.4 =
+* bug fixed
+* converted status & priority to custom taxonomy
+
 = 1.0.3 =
 * bug fixed
 

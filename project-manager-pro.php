@@ -3,7 +3,7 @@
 Plugin Name: Project Manager Pro
 Plugin URI: https://sandalia.com.bd/apps/project-manager-pro
 Description: Project Manager Pro helps teams manage projects, tasks, and deadlines directly from WordPress, enabling seamless collaboration and productivity.
-Version:1.0.3
+Version:1.0.4
 Author: Delower
 Author URI: https://github.com/delower186
 License: GPLv2 or later
@@ -38,6 +38,7 @@ define('PROJMANPRO_DIR_URL', plugin_dir_url( __FILE__));
 require_once PROJMANPRO_DIR_PATH . 'includes/projmanpro_enqueue.php';
 require_once PROJMANPRO_DIR_PATH . 'project/projmanpro_cpt_projects.php';
 require_once PROJMANPRO_DIR_PATH . 'task/projmanpro_cpt_tasks.php';
+require_once PROJMANPRO_DIR_PATH . 'includes/projmanpro_custom_taxonomies.php';
 require_once PROJMANPRO_DIR_PATH . 'includes/projmanpro_menu.php';
 require_once PROJMANPRO_DIR_PATH . 'project/projmanpro_project_view.php';
 require_once PROJMANPRO_DIR_PATH . 'task/projmanpro_task_view.php';

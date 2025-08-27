@@ -14,11 +14,16 @@ if (!defined('ABSPATH')) exit;
                 $count = wp_count_posts('projmanpro_project');
                 $completed_projects_count = ( isset($count->publish) ) ? (int) $count->publish : 0;
                 $completed_projects = new WP_Query([
-                    'post_type' => 'projmanpro_project',
-                    'meta_key' => '_projmanpro_project_status',
-                    'meta_value' => 'completed',
-                    'fields' => 'ids',
-                    'posts_per_page' => -1
+                    'post_type'      => 'projmanpro_project',
+                    'tax_query'      => [
+                        [
+                            'taxonomy' => 'projmanpro_project_status',
+                            'field'    => 'slug', // Can also use 'term_id' if you have the ID
+                            'terms'    => 'completed',
+                        ],
+                    ],
+                    'fields'         => 'ids',
+                    'posts_per_page' => -1,
                 ]);
                 echo esc_html(count($completed_projects->posts));
                 ?>
@@ -31,12 +36,18 @@ if (!defined('ABSPATH')) exit;
             <p style="font-size:28px; font-weight:bold; margin:0;">
                 <?php
                 $completed_tasks = new WP_Query([
-                    'post_type' => 'projmanpro_task',
-                    'meta_key'  => '_projmanpro_task_status',
-                    'meta_value'=> 'completed',
-                    'fields' => 'ids',
-                    'posts_per_page' => -1
+                    'post_type'      => 'projmanpro_task',
+                    'tax_query'      => [
+                        [
+                            'taxonomy' => 'projmanpro_task_status',
+                            'field'    => 'slug', // Can also use 'term_id' if you have the ID
+                            'terms'    => 'completed',
+                        ],
+                    ],
+                    'fields'         => 'ids',
+                    'posts_per_page' => -1,
                 ]);
+
                 echo esc_html(count($completed_tasks->posts));
                 ?>
             </p>
@@ -48,11 +59,16 @@ if (!defined('ABSPATH')) exit;
             <p style="font-size:28px; font-weight:bold; margin:0;">
                 <?php
                 $pending_tasks = new WP_Query([
-                    'post_type' => 'projmanpro_task',
-                    'meta_key'  => '_projmanpro_task_status',
-                    'meta_value'=> 'pending',
-                    'fields' => 'ids',
-                    'posts_per_page' => -1
+                    'post_type'      => 'projmanpro_task',
+                    'tax_query'      => [
+                        [
+                            'taxonomy' => 'projmanpro_task_status',
+                            'field'    => 'slug', // Can also use 'term_id' if you have the ID
+                            'terms'    => 'pending',
+                        ],
+                    ],
+                    'fields'         => 'ids',
+                    'posts_per_page' => -1,
                 ]);
                 echo esc_html(count($pending_tasks->posts));
                 ?>
@@ -79,11 +95,16 @@ if (!defined('ABSPATH')) exit;
                 <?php
                 // 1. Get all running projects
                 $running_projects = new WP_Query([
-                    'post_type' => 'projmanpro_project',
-                    'meta_key' => '_projmanpro_project_status',
-                    'meta_value' => 'in_progress',
+                    'post_type'      => 'projmanpro_project',
+                    'tax_query'      => [
+                        [
+                            'taxonomy' => 'projmanpro_project_status',
+                            'field'    => 'slug', // Can also use 'term_id' if you have the ID
+                            'terms'    => 'in_progress',
+                        ],
+                    ],
+                    'fields'         => 'ids',
                     'posts_per_page' => -1,
-                    'fields' => 'ids'
                 ]);
 
                 if (!empty($running_projects->posts)):
@@ -107,8 +128,8 @@ if (!defined('ABSPATH')) exit;
                             $proj_id = get_post_meta(get_the_ID(), '_projmanpro_related_project', true);
                             $tasks_by_project[$proj_id][] = [
                                 'id' => get_the_ID(),
-                                'status' => get_post_meta(get_the_ID(), '_projmanpro_task_status', true),
-                                'priority' => get_post_meta(get_the_ID(), '_projmanpro_task_priority', true),
+                                'status'    => wp_get_post_terms(get_the_ID(), 'projmanpro_task_status', ['fields' => 'names']),
+                                'priority'  => wp_get_post_terms(get_the_ID(), 'projmanpro_task_priority', ['fields' => 'names']),
                                 'due_date' => get_post_meta(get_the_ID(), '_projmanpro_task_due_date', true),
                                 'assigned' => get_post_meta(get_the_ID(), '_projmanpro_task_assigned', true),
                                 'title' => get_the_title()
@@ -118,8 +139,8 @@ if (!defined('ABSPATH')) exit;
                     }
 
                     foreach ($running_projects->posts as $proj_id):
-                        $proj_status = get_post_meta($proj_id,'_projmanpro_project_status',true);
-                        $proj_priority = get_post_meta($proj_id,'_projmanpro_project_priority',true);
+                        $proj_status = wp_get_post_terms($proj_id, 'projmanpro_project_status', ['fields' => 'names']);
+                        $proj_priority = wp_get_post_terms($proj_id, 'projmanpro_project_priority', ['fields' => 'names']);
                         $proj_manager_id = get_post_meta($proj_id,'_projmanpro_project_assigned',true);
                         $proj_manager = $proj_manager_id ? get_userdata($proj_manager_id) : null;
                         $proj_tasks = $tasks_by_project[$proj_id] ?? [];
@@ -141,10 +162,10 @@ if (!defined('ABSPATH')) exit;
                                 <?php echo $proj_manager ? esc_html($proj_manager->display_name) : '—'; ?>
                             </td>
                             <td style="padding:10px; border:1px solid #ddd;">
-                                <span class="pmp-badge pmp-status-<?php echo esc_attr($proj_status); ?>"><?php echo esc_html(ucfirst($proj_status)); ?></span>
+                                <span class="pmp-badge pmp-status-<?php echo esc_attr($proj_status[0]); ?>"><?php echo esc_html(ucfirst($proj_status[0])); ?></span>
                             </td>
                             <td style="padding:10px; border:1px solid #ddd;">
-                                <span class="pmp-badge pmp-priority-<?php echo esc_attr($proj_priority); ?>"><?php echo esc_html(ucfirst($proj_priority)); ?></span>
+                                <span class="pmp-badge pmp-priority-<?php echo esc_attr($proj_priority[0]); ?>"><?php echo esc_html(ucfirst($proj_priority[0])); ?></span>
                             </td>
                             <td style="padding:10px; border:1px solid #ddd; width:220px;">
                                 <div style="background:#ddd; border-radius:6px; overflow:hidden; height:20px;">
@@ -183,10 +204,10 @@ if (!defined('ABSPATH')) exit;
                                                     <td style="padding:6px; border:1px solid #ddd;"><?php echo esc_html($task['title']); ?></td>
                                                     <td style="padding:6px; border:1px solid #ddd;"><?php echo $assigned_user ? esc_html($assigned_user->display_name) : '—'; ?></td>
                                                     <td style="padding:6px; border:1px solid #ddd;">
-                                                        <span class="pmp-badge pmp-status-<?php echo esc_attr($task['status']); ?>"><?php echo esc_html(ucfirst($task['status'])); ?></span>
+                                                        <span class="pmp-badge pmp-status-<?php echo esc_attr($task['status'][0]); ?>"><?php echo esc_html(ucfirst($task['status'][0])); ?></span>
                                                     </td>
                                                     <td style="padding:6px; border:1px solid #ddd;">
-                                                        <span class="pmp-badge pmp-priority-<?php echo esc_attr($task['priority']); ?>"><?php echo esc_html(ucfirst($task['priority'])); ?></span>
+                                                        <span class="pmp-badge pmp-priority-<?php echo esc_attr($task['priority'][0]); ?>"><?php echo esc_html(ucfirst($task['priority'][0])); ?></span>
                                                     </td>
                                                     <td style="padding:6px; border:1px solid #ddd;"><?php echo $task['due_date'] ? esc_html($task['due_date']) : '—'; ?></td>
                                                     <td style="padding:6px; border:1px solid #ddd;">

@@ -76,8 +76,6 @@ function projmanpro_task_meta_callback($post) {
 
     wp_nonce_field('projmanpro_save_task_meta_action', 'projmanpro_task_meta_nonce');
 
-    $status   = get_post_meta($post->ID, '_projmanpro_task_status', true);
-    $priority = get_post_meta($post->ID, '_projmanpro_task_priority', true);
     $due_date = get_post_meta($post->ID, '_projmanpro_task_due_date', true);
     $assigned = get_post_meta($post->ID, '_projmanpro_task_assigned', true);
     $related_project = get_post_meta($post->ID, '_projmanpro_related_project', true);
@@ -90,17 +88,29 @@ function projmanpro_task_meta_callback($post) {
     <p>
         <label>Status:</label><br>
         <select name="projmanpro_task_status">
-            <option value="pending" <?php selected($status, 'pending'); ?>>Pending</option>
-            <option value="in_progress" <?php selected($status, 'in_progress'); ?>>In Progress</option>
-            <option value="completed" <?php selected($status, 'completed'); ?>>Completed</option>
+            <?php 
+                $terms   = get_terms(['taxonomy' => 'projmanpro_task_status', 'hide_empty' => false]);
+                $current = wp_get_post_terms($post->ID, 'projmanpro_task_status', ['fields' => 'ids']);
+                $current = $current ? $current[0] : '';
+
+                foreach ($terms as $term) {
+                    echo '<option value="' . esc_attr($term->term_id) . '" ' . selected($current, $term->term_id, false) . '>' . esc_html($term->name) . '</option>';
+                }
+            ?>
         </select>
     </p>
     <p>
         <label>Priority:</label><br>
         <select name="projmanpro_task_priority">
-            <option value="low" <?php selected($priority, 'low'); ?>>Low</option>
-            <option value="medium" <?php selected($priority, 'medium'); ?>>Medium</option>
-            <option value="high" <?php selected($priority, 'high'); ?>>High</option>
+            <?php 
+                $terms   = get_terms(['taxonomy' => 'projmanpro_task_priority', 'hide_empty' => false]);
+                $current = wp_get_post_terms($post->ID, 'projmanpro_task_priority', ['fields' => 'ids']);
+                $current = $current ? $current[0] : '';
+
+                foreach ($terms as $term) {
+                    echo '<option value="' . esc_attr($term->term_id) . '" ' . selected($current, $term->term_id, false) . '>' . esc_html($term->name) . '</option>';
+                }
+            ?>
         </select>
     </p>
     <p>
@@ -154,12 +164,12 @@ function projmanpro_save_task_meta($post_id) {
     }
 
     // Now process fields safely.
+    // Save taxonomy terms
     if (isset($_POST['projmanpro_task_status'])) {
-        update_post_meta($post_id, '_projmanpro_task_status', sanitize_text_field(wp_unslash($_POST['projmanpro_task_status'])));
+        wp_set_post_terms($post_id, [(int) $_POST['projmanpro_task_status']], 'projmanpro_task_status', false);
     }
-
     if (isset($_POST['projmanpro_task_priority'])) {
-        update_post_meta($post_id, '_projmanpro_task_priority', sanitize_text_field(wp_unslash($_POST['projmanpro_task_priority'])));
+        wp_set_post_terms($post_id, [(int) $_POST['projmanpro_task_priority']], 'projmanpro_task_priority', false);
     }
 
     if (isset($_POST['projmanpro_task_due_date'])) {
@@ -195,7 +205,8 @@ add_filter('manage_projmanpro_task_posts_columns', 'projmanpro_task_columns');
 function projmanpro_task_column_content($column, $post_id) {
     switch ($column) {
         case 'status':
-            $status = get_post_meta($post_id, '_projmanpro_task_status', true);
+            $terms = wp_get_post_terms($post_id, 'projmanpro_task_status');
+            $status = $terms[0]->slug; 
             $color = 'gray';
             if ($status === 'pending') $color = '#ff9800';
             elseif ($status === 'in_progress') $color = '#2196f3';
@@ -208,7 +219,8 @@ function projmanpro_task_column_content($column, $post_id) {
             break;
 
         case 'priority':
-            $priority = get_post_meta($post_id, '_projmanpro_task_priority', true);
+            $terms = wp_get_post_terms($post_id, 'projmanpro_task_priority');
+            $priority = $terms[0]->slug;
             $color = 'gray';
             if ($priority === 'low') $color = '#4caf50';
             elseif ($priority === 'medium') $color = '#ff9800';
@@ -273,7 +285,7 @@ add_filter('manage_edit-projmanpro_task_sortable_columns', 'projmanpro_task_sort
 
 // 2. Modify query for sorting
 function projmanpro_task_orderby($query) {
-    if (!is_admin() || !$query->is_main_query()) {
+    if (!is_admin() || !$query->is_main_query() || $query->get('post_type') !== 'projmanpro_task') {
         return;
     }
 
@@ -281,12 +293,10 @@ function projmanpro_task_orderby($query) {
 
     switch ($orderby) {
         case 'projmanpro_task_status':
-            $query->set('meta_key', '_projmanpro_task_status');
-            $query->set('orderby', 'meta_value');
+            $query->set('orderby', 'projmanpro_task_status');
             break;
         case 'projmanpro_task_priority':
-            $query->set('meta_key', '_projmanpro_task_priority');
-            $query->set('orderby', 'meta_value');
+            $query->set('orderby', 'projmanpro_task_priority');
             break;
         case 'projmanpro_task_due_date':
             $query->set('meta_key', '_projmanpro_task_due_date');
@@ -304,23 +314,53 @@ function projmanpro_task_orderby($query) {
 }
 add_action('pre_get_posts', 'projmanpro_task_orderby');
 
+// Order By columns
+add_filter('posts_clauses', function ($clauses, $query) {
+    global $wpdb;
+
+    if (!is_admin() || !$query->is_main_query() || $query->get('post_type') !== 'projmanpro_task') {
+        return $clauses;
+    }
+
+    $orderby = $query->get('orderby');
+
+    if ($orderby === 'projmanpro_task_status' || $orderby === 'projmanpro_task_priority') {
+        $taxonomy = ($orderby === 'projmanpro_task_status') ? 'projmanpro_task_status' : 'projmanpro_task_priority';
+
+        // Join term tables dynamically based on taxonomy
+        $clauses['join'] .= "
+            LEFT JOIN {$wpdb->term_relationships} AS tr ON ({$wpdb->posts}.ID = tr.object_id)
+            LEFT JOIN {$wpdb->term_taxonomy} AS tt ON (tr.term_taxonomy_id = tt.term_taxonomy_id AND tt.taxonomy = '{$taxonomy}')
+            LEFT JOIN {$wpdb->terms} AS t ON (tt.term_id = t.term_id)
+        ";
+
+        // Order by term name
+        $clauses['orderby'] = "t.name " . ($query->get('order') === 'DESC' ? 'DESC' : 'ASC');
+        $clauses['groupby'] = "{$wpdb->posts}.ID"; // Prevent duplicate rows
+    }
+
+    return $clauses;
+}, 10, 2);
+
 
 // Add filters above Tasks table
+// Add Filters Dropdowns in Admin List Table
 function projmanpro_task_filters() {
     global $typenow;
     if ($typenow !== 'projmanpro_task') {
         return;
     }
 
-    // Add nonce field (printed in the filter form)
+    // Add nonce field
     wp_nonce_field('projmanpro_task_filters_action', 'projmanpro_task_filters_nonce');
 
-    // Initialize defaults
-    $current_status = '';
-    $current_user   = '';
-    $current_proj   = '';
+    // Defaults
+    $current_status  = '';
+    $current_priority = '';
+    $current_user    = '';
+    $current_proj    = '';
 
-    // Verify nonce before processing $_GET values
+    // Verify nonce before processing values
     if (
         isset($_GET['projmanpro_task_filters_nonce']) &&
         wp_verify_nonce(
@@ -328,37 +368,49 @@ function projmanpro_task_filters() {
             'projmanpro_task_filters_action'
         )
     ) {
-        $current_status = isset($_GET['_projmanpro_task_status'])
-            ? sanitize_text_field(wp_unslash($_GET['_projmanpro_task_status']))
-            : '';
-
-        $current_user = isset($_GET['_projmanpro_task_assigned'])
-            ? intval($_GET['_projmanpro_task_assigned'])
-            : '';
-
-        $current_proj = isset($_GET['_projmanpro_related_project'])
-            ? intval($_GET['_projmanpro_related_project'])
-            : '';
+        $current_status  = isset($_GET['projmanpro_task_status']) ? sanitize_text_field(wp_unslash($_GET['projmanpro_task_status'])) : '';
+        $current_priority = isset($_GET['projmanpro_task_priority']) ? sanitize_text_field(wp_unslash($_GET['projmanpro_task_priority'])) : '';
+        $current_user    = isset($_GET['_projmanpro_task_assigned']) ? intval($_GET['_projmanpro_task_assigned']) : '';
+        $current_proj    = isset($_GET['_projmanpro_related_project']) ? intval($_GET['_projmanpro_related_project']) : '';
     }
 
-    // Status filter
-    $statuses = [
-        'pending'     => 'Pending',
-        'in_progress' => 'In Progress',
-        'completed'   => 'Completed',
-    ];
-    echo '<select name="_projmanpro_task_status"><option value="">All Statuses</option>';
-    foreach ($statuses as $key => $label) {
-        printf(
-            '<option value="%s"%s>%s</option>',
-            esc_attr($key),
-            selected($current_status, $key, false),
-            esc_html($label)
-        );
+    // Task Status Filter (taxonomy)
+    $statuses = get_terms([
+        'taxonomy'   => 'projmanpro_task_status',
+        'hide_empty' => false,
+    ]);
+    echo '<select name="projmanpro_task_status"><option value="">All Statuses</option>';
+    if (!is_wp_error($statuses)) {
+        foreach ($statuses as $status) {
+            printf(
+                '<option value="%s"%s>%s</option>',
+                esc_attr($status->slug),
+                selected($current_status, $status->slug, false),
+                esc_html($status->name)
+            );
+        }
     }
     echo '</select>';
 
-    // Assigned User filter
+    // Task Priority Filter (taxonomy)
+    $priorities = get_terms([
+        'taxonomy'   => 'projmanpro_task_priority',
+        'hide_empty' => false,
+    ]);
+    echo '<select name="projmanpro_task_priority"><option value="">All Priorities</option>';
+    if (!is_wp_error($priorities)) {
+        foreach ($priorities as $priority) {
+            printf(
+                '<option value="%s"%s>%s</option>',
+                esc_attr($priority->slug),
+                selected($current_priority, $priority->slug, false),
+                esc_html($priority->name)
+            );
+        }
+    }
+    echo '</select>';
+
+    // Assigned User Filter
     $users = get_users();
     echo '<select name="_projmanpro_task_assigned"><option value="">All Users</option>';
     foreach ($users as $user) {
@@ -371,7 +423,7 @@ function projmanpro_task_filters() {
     }
     echo '</select>';
 
-    // Related Project filter
+    // Related Project Filter
     $projects = get_posts([
         'post_type'   => 'projmanpro_project',
         'numberposts' => -1,
@@ -390,48 +442,65 @@ function projmanpro_task_filters() {
 add_action('restrict_manage_posts', 'projmanpro_task_filters');
 
 
-
-// Filter Tasks query
+// Apply Filters to Query
 function projmanpro_task_filters_query($query) {
     global $pagenow, $typenow;
 
     if ($pagenow === 'edit.php' && $typenow === 'projmanpro_task' && $query->is_main_query()) {
 
         // Verify nonce
-        if (!isset($_GET['projmanpro_task_filters_nonce']) || 
+        if (!isset($_GET['projmanpro_task_filters_nonce']) ||
             !wp_verify_nonce(sanitize_text_field(wp_unslash($_GET['projmanpro_task_filters_nonce'])), 'projmanpro_task_filters_action')) {
-            return; // Nonce failed, bail out
+            return;
         }
 
-        if (!empty($_GET['_projmanpro_task_status'])) {
-            $query->set('meta_query', [
-                [
-                    'key'   => '_projmanpro_task_status',
-                    'value' => sanitize_text_field(wp_unslash($_GET['_projmanpro_task_status']))
-                ]
-            ]);
+        // Taxonomy Filters
+        $tax_query = [];
+
+        if (!empty($_GET['projmanpro_task_status'])) {
+            $tax_query[] = [
+                'taxonomy' => 'projmanpro_task_status',
+                'field'    => 'slug',
+                'terms'    => sanitize_text_field(wp_unslash($_GET['projmanpro_task_status']))
+            ];
         }
+
+        if (!empty($_GET['projmanpro_task_priority'])) {
+            $tax_query[] = [
+                'taxonomy' => 'projmanpro_task_priority',
+                'field'    => 'slug',
+                'terms'    => sanitize_text_field(wp_unslash($_GET['projmanpro_task_priority']))
+            ];
+        }
+
+        if (!empty($tax_query)) {
+            $query->set('tax_query', $tax_query);
+        }
+
+        // Meta Filters
+        $meta_query = [];
 
         if (!empty($_GET['_projmanpro_task_assigned'])) {
-            $query->set('meta_query', [
-                [
-                    'key'   => '_projmanpro_task_assigned',
-                    'value' => intval($_GET['_projmanpro_task_assigned'])
-                ]
-            ]);
+            $meta_query[] = [
+                'key'   => '_projmanpro_task_assigned',
+                'value' => intval($_GET['_projmanpro_task_assigned'])
+            ];
         }
 
         if (!empty($_GET['_projmanpro_related_project'])) {
-            $query->set('meta_query', [
-                [
-                    'key'   => '_projmanpro_related_project',
-                    'value' => intval($_GET['_projmanpro_related_project'])
-                ]
-            ]);
+            $meta_query[] = [
+                'key'   => '_projmanpro_related_project',
+                'value' => intval($_GET['_projmanpro_related_project'])
+            ];
+        }
+
+        if (!empty($meta_query)) {
+            $query->set('meta_query', $meta_query);
         }
     }
 }
 add_action('pre_get_posts', 'projmanpro_task_filters_query');
+
 
 
 // Remove Comments column from Project CPT list table

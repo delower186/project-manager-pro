@@ -22,8 +22,12 @@ add_action('wp_ajax_projmanpro_task_quick_view', function() {
     }
 
     // Meta fields
-    $status       = get_post_meta($post_id, '_projmanpro_task_status', true) ?: 'Pending';
-    $priority     = get_post_meta($post_id, '_projmanpro_task_priority', true) ?: 'Normal';
+    $status_terms = wp_get_post_terms($post_id, 'projmanpro_task_status');
+    $status       = $status_terms[0]->slug ? $status_terms[0]->slug : '—';
+
+    $priority_terms = wp_get_post_terms($post_id, 'projmanpro_task_priority');
+    $priority     = $priority_terms[0]->slug ? $priority_terms[0]->slug : '—';
+
     $due_date     = get_post_meta($post_id, '_projmanpro_task_due_date', true) ?: '—';
     $assignee_id  = get_post_meta($post_id, '_projmanpro_task_assigned', true);
     $assignee_name= $assignee_id ? get_the_author_meta('display_name', $assignee_id) : '—';
@@ -39,7 +43,6 @@ add_action('wp_ajax_projmanpro_task_quick_view', function() {
     }
 
     if ($status === 'completed') $time_left = "🎉";
-    elseif ($status === 'cancelled') $time_left = "😢";
 
     ob_start(); ?>
     <div>

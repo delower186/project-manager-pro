@@ -76,33 +76,34 @@ function projmanpro_project_meta_callback($post) {
     
      wp_nonce_field('projmanpro_save_project_meta_action', 'projmanpro_project_meta_nonce');
 
-    $status    = get_post_meta($post->ID, '_projmanpro_project_status', true);
-    $priority  = get_post_meta($post->ID, '_projmanpro_project_priority', true);
     $due_date  = get_post_meta($post->ID, '_projmanpro_project_due_date', true);
     $assigned  = get_post_meta($post->ID, '_projmanpro_project_assigned', true);
 
     // Get users
     $users = get_users();
 
-    // Check if project has incomplete tasks
+    // Check if project has incomplete tasks (meta for project, taxonomy for status)
     $incomplete_tasks = new WP_Query([
         'post_type'      => 'projmanpro_task',
         'posts_per_page' => 1,
         'fields'         => 'ids', // ✅ Faster, only fetch IDs
         'meta_query'     => [
-            'relation' => 'AND',
             [
-                'key'   => '_projmanpro_related_project',
-                'value' => $post->ID,
+                'key'     => '_projmanpro_related_project',
+                'value'   => $post->ID,
                 'compare' => '='
-            ],
+            ]
+        ],
+        'tax_query'      => [
             [
-                'key'     => '_projmanpro_task_status',
-                'value'   => ['pending', 'in_progress'],
-                'compare' => 'IN'
+                'taxonomy' => 'projmanpro_task_status',
+                'field'    => 'slug', // or 'term_id' if using IDs
+                'terms'    => ['pending', 'in_progress'],
+                'operator' => 'IN'
             ]
         ],
     ]);
+
 
 
 
@@ -112,20 +113,34 @@ function projmanpro_project_meta_callback($post) {
     <p>
         <label>Status:</label><br>
         <select name="projmanpro_project_status">
-            <option value="pending" <?php selected($status, 'pending'); ?>>Pending</option>
-            <option value="in_progress" <?php selected($status, 'in_progress'); ?>>In Progress</option>
-            <option value="completed" <?php selected($status, 'completed'); ?> <?php echo esc_html($disable_completed); ?>>
-                Completed<?php echo esc_html($completed_note); ?>
-            </option>
+            <?php 
+                $terms   = get_terms(['taxonomy' => 'projmanpro_project_status', 'hide_empty' => false]);
+                $current = wp_get_post_terms($post->ID, 'projmanpro_project_status', ['fields' => 'ids']);
+                $current = $current ? $current[0] : '';
+
+                foreach ($terms as $term) {
+                    if($term->name !== 'completed'){
+                        echo '<option value="' . esc_attr($term->term_id) . '" ' . selected($current, $term->term_id, false) . '>' . esc_html($term->name) . '</option>';
+                    }else{
+                        echo '<option value="' . esc_attr($term->term_id) . '" ' . selected($current, $term->term_id, false) . ' ' .esc_html($disable_completed). '>' . esc_html($term->name) .' ' .esc_html($completed_note). '</option>';
+                    }
+                }
+            ?>
         </select>
     </p>
 
     <p>
         <label>Priority:</label><br>
         <select name="projmanpro_project_priority">
-            <option value="low" <?php selected($priority, 'low'); ?>>Low</option>
-            <option value="medium" <?php selected($priority, 'medium'); ?>>Medium</option>
-            <option value="high" <?php selected($priority, 'high'); ?>>High</option>
+            <?php 
+                $terms   = get_terms(['taxonomy' => 'projmanpro_project_priority', 'hide_empty' => false]);
+                $current = wp_get_post_terms($post->ID, 'projmanpro_project_priority', ['fields' => 'ids']);
+                $current = $current ? $current[0] : '';
+
+                foreach ($terms as $term) {
+                    echo '<option value="' . esc_attr($term->term_id) . '" ' . selected($current, $term->term_id, false) . '>' . esc_html($term->name) . '</option>';
+                }
+            ?>
         </select>
     </p>
 
@@ -167,11 +182,13 @@ function projmanpro_save_project_meta($post_id) {
     }
 
     // 4. Process & sanitize fields
+
+    // Save taxonomy terms
     if (isset($_POST['projmanpro_project_status'])) {
-        update_post_meta($post_id, '_projmanpro_project_status', sanitize_text_field(wp_unslash($_POST['projmanpro_project_status'])));
+        wp_set_post_terms($post_id, [(int) $_POST['projmanpro_project_status']], 'projmanpro_project_status', false);
     }
     if (isset($_POST['projmanpro_project_priority'])) {
-        update_post_meta($post_id, '_projmanpro_project_priority', sanitize_text_field(wp_unslash($_POST['projmanpro_project_priority'])));
+        wp_set_post_terms($post_id, [(int) $_POST['projmanpro_project_priority']], 'projmanpro_project_priority', false);
     }
     if (isset($_POST['projmanpro_project_due_date'])) {
         update_post_meta($post_id, '_projmanpro_project_due_date', sanitize_text_field(wp_unslash($_POST['projmanpro_project_due_date'])));
@@ -201,7 +218,8 @@ add_filter('manage_projmanpro_project_posts_columns', 'projmanpro_project_column
 function projmanpro_project_column_content($column, $post_id) {
     switch ($column) {
         case 'status':
-            $status = get_post_meta($post_id, '_projmanpro_project_status', true);
+            $terms = wp_get_post_terms($post_id, 'projmanpro_project_status');
+            $status = $terms[0]->slug; 
             $color = 'gray';
             if ($status === 'pending') $color = '#ff9800';
             elseif ($status === 'in_progress') $color = '#2196f3';
@@ -210,7 +228,8 @@ function projmanpro_project_column_content($column, $post_id) {
             break;
 
         case 'priority':
-            $priority = get_post_meta($post_id, '_projmanpro_project_priority', true);
+            $terms = wp_get_post_terms($post_id, 'projmanpro_project_priority');
+            $priority = $terms[0]->slug;
             $color = 'gray';
             if ($priority === 'low') $color = '#4caf50';
             elseif ($priority === 'medium') $color = '#ff9800';
@@ -261,28 +280,59 @@ add_filter('manage_edit-projmanpro_project_sortable_columns', 'projmanpro_projec
 
 // Handle sorting by meta
 function projmanpro_project_orderby($query) {
-    if(!is_admin()) return;
+    if (!is_admin() || !$query->is_main_query() || $query->get('post_type') !== 'projmanpro_project') {
+        return;
+    }
 
     $orderby = $query->get('orderby');
 
-    if($orderby == 'status') {
-        $query->set('meta_key', '_projmanpro_project_status');
-        $query->set('orderby', 'meta_value');
+    if ($orderby === 'status') {
+        $query->set('orderby', 'projmanpro_project_status');
+    } 
+    elseif ($orderby === 'priority') {
+        $query->set('orderby', 'projmanpro_project_priority');
     }
-    elseif($orderby == 'priority') {
-        $query->set('meta_key', '_projmanpro_project_priority');
-        $query->set('orderby', 'meta_value');
-    }
-    elseif($orderby == 'due_date') {
+    elseif ($orderby === 'due_date') {
         $query->set('meta_key', '_projmanpro_project_due_date');
         $query->set('orderby', 'meta_value');
     }
-    elseif($orderby == 'assigned') {
+    elseif ($orderby === 'assigned') {
         $query->set('meta_key', '_projmanpro_project_assigned');
         $query->set('orderby', 'meta_value_num');
     }
 }
 add_action('pre_get_posts', 'projmanpro_project_orderby');
+
+
+// Order By columns
+add_filter('posts_clauses', function ($clauses, $query) {
+    global $wpdb;
+
+    if (!is_admin() || !$query->is_main_query() || $query->get('post_type') !== 'projmanpro_project') {
+        return $clauses;
+    }
+
+    $orderby = $query->get('orderby');
+
+    if ($orderby === 'projmanpro_project_status' || $orderby === 'projmanpro_project_priority') {
+        $taxonomy = ($orderby === 'projmanpro_project_status') ? 'projmanpro_project_status' : 'projmanpro_project_priority';
+
+        // Join term tables dynamically based on taxonomy
+        $clauses['join'] .= "
+            LEFT JOIN {$wpdb->term_relationships} AS tr ON ({$wpdb->posts}.ID = tr.object_id)
+            LEFT JOIN {$wpdb->term_taxonomy} AS tt ON (tr.term_taxonomy_id = tt.term_taxonomy_id AND tt.taxonomy = '{$taxonomy}')
+            LEFT JOIN {$wpdb->terms} AS t ON (tt.term_id = t.term_id)
+        ";
+
+        // Order by term name
+        $clauses['orderby'] = "t.name " . ($query->get('order') === 'DESC' ? 'DESC' : 'ASC');
+        $clauses['groupby'] = "{$wpdb->posts}.ID"; // Prevent duplicate rows
+    }
+
+    return $clauses;
+}, 10, 2);
+
+
 
 // Add Filters for Projects Table
 // Add dropdown filters above Projects table
@@ -292,43 +342,64 @@ function projmanpro_project_filters() {
         return;
     }
 
-    // ✅ First verify nonce before reading $_GET
+    // Verify nonce before reading $_GET
     $nonce_valid = (
         isset($_GET['projmanpro_filter_nonce']) &&
         wp_verify_nonce(sanitize_text_field(wp_unslash($_GET['projmanpro_filter_nonce'])), 'projmanpro_filter_projects')
     );
 
-    // Status filter
-    $statuses = [
-        'pending'     => 'Pending',
-        'in_progress' => 'In Progress',
-        'completed'   => 'Completed'
-    ];
+    // --- Status Filter (Taxonomy) ---
+    $current_status = ($nonce_valid && isset($_GET['projmanpro_project_status']))
+        ? sanitize_text_field(wp_unslash($_GET['projmanpro_project_status']))
+        : '';
 
-    $current_status = '';
-    if ($nonce_valid && isset($_GET['_projmanpro_project_status'])) {
-        $current_status = sanitize_text_field(wp_unslash($_GET['_projmanpro_project_status']));
-    }
+    $statuses = get_terms([
+        'taxonomy'   => 'projmanpro_project_status',
+        'hide_empty' => false,
+    ]);
 
-    // Output dropdown
-    echo '<select name="_projmanpro_project_status"><option value="">All Statuses</option>';
-    foreach ($statuses as $key => $label) {
-        printf(
-            '<option value="%s"%s>%s</option>',
-            esc_attr($key),
-            selected($current_status, $key, false),
-            esc_html($label)
-        );
+    echo '<select name="projmanpro_project_status"><option value="">All Statuses</option>';
+    if (!is_wp_error($statuses)) {
+        foreach ($statuses as $status) {
+            printf(
+                '<option value="%s"%s>%s</option>',
+                esc_attr($status->slug),
+                selected($current_status, $status->slug, false),
+                esc_html($status->name)
+            );
+        }
     }
     echo '</select>';
 
-    // Assigned User filter
-    $users = get_users();
+    // --- Priority Filter (Taxonomy) ---
+    $current_priority = ($nonce_valid && isset($_GET['projmanpro_project_priority']))
+        ? sanitize_text_field(wp_unslash($_GET['projmanpro_project_priority']))
+        : '';
 
-    $current_user = '';
-    if ($nonce_valid && isset($_GET['_projmanpro_project_assigned'])) {
-        $current_user = intval($_GET['_projmanpro_project_assigned']);
+    $priorities = get_terms([
+        'taxonomy'   => 'projmanpro_project_priority',
+        'hide_empty' => false,
+    ]);
+
+    echo '<select name="projmanpro_project_priority"><option value="">All Priorities</option>';
+    if (!is_wp_error($priorities)) {
+        foreach ($priorities as $priority) {
+            printf(
+                '<option value="%s"%s>%s</option>',
+                esc_attr($priority->slug),
+                selected($current_priority, $priority->slug, false),
+                esc_html($priority->name)
+            );
+        }
     }
+    echo '</select>';
+
+    // --- Assigned User Filter (Meta) ---
+    $current_user = ($nonce_valid && isset($_GET['_projmanpro_project_assigned']))
+        ? intval($_GET['_projmanpro_project_assigned'])
+        : '';
+
+    $users = get_users();
 
     echo '<select name="_projmanpro_project_assigned"><option value="">All Users</option>';
     foreach ($users as $user) {
@@ -341,20 +412,19 @@ function projmanpro_project_filters() {
     }
     echo '</select>';
 
-    // ✅ Add nonce field
+    // Nonce field
     wp_nonce_field('projmanpro_filter_projects', 'projmanpro_filter_nonce');
 }
 add_action('restrict_manage_posts', 'projmanpro_project_filters');
 
 
-
-// Filter query by selected status or assigned user
+// Apply filters to admin query
 function projmanpro_project_filter_query($query) {
     global $pagenow, $typenow;
 
     if ($typenow === 'projmanpro_project' && $pagenow === 'edit.php' && $query->is_main_query()) {
 
-        // ✅ Verify nonce
+        // Verify nonce
         if (
             !isset($_GET['projmanpro_filter_nonce']) ||
             !wp_verify_nonce(sanitize_text_field(wp_unslash($_GET['projmanpro_filter_nonce'])), 'projmanpro_filter_projects')
@@ -362,18 +432,34 @@ function projmanpro_project_filter_query($query) {
             return; // Nonce invalid → skip filtering
         }
 
-        $meta_query = $query->get('meta_query') ?: [];
+        // --- Taxonomy Query ---
+        $tax_query = [];
 
-        // Status filter
-        if (!empty($_GET['_projmanpro_project_status'])) {
-            $meta_query[] = [
-                'key'     => '_projmanpro_project_status',
-                'value'   => sanitize_text_field(wp_unslash($_GET['_projmanpro_project_status'])),
-                'compare' => '='
+        // Filter by Status
+        if (!empty($_GET['projmanpro_project_status'])) {
+            $tax_query[] = [
+                'taxonomy' => 'projmanpro_project_status',
+                'field'    => 'slug',
+                'terms'    => sanitize_text_field(wp_unslash($_GET['projmanpro_project_status'])),
             ];
         }
 
-        // Assigned User filter
+        // Filter by Priority
+        if (!empty($_GET['projmanpro_project_priority'])) {
+            $tax_query[] = [
+                'taxonomy' => 'projmanpro_project_priority',
+                'field'    => 'slug',
+                'terms'    => sanitize_text_field(wp_unslash($_GET['projmanpro_project_priority'])),
+            ];
+        }
+
+        if ($tax_query) {
+            $query->set('tax_query', $tax_query);
+        }
+
+        // --- Meta Query (Assigned User) ---
+        $meta_query = $query->get('meta_query') ?: [];
+
         if (!empty($_GET['_projmanpro_project_assigned'])) {
             $meta_query[] = [
                 'key'     => '_projmanpro_project_assigned',
@@ -388,6 +474,7 @@ function projmanpro_project_filter_query($query) {
     }
 }
 add_action('pre_get_posts', 'projmanpro_project_filter_query');
+
 
 
 
