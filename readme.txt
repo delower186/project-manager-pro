@@ -1,10 +1,10 @@
 === Project Manager Pro ===
-Contributors: delower186
+Contributors: delower186, sandaliaapps
 Tags: task manager, project manager pro, wp-project-manager, productivity
 Requires at least: 6.4
 Tested up to: 6.8
 Requires PHP: 7.2.24
-Stable tag: 1.0.4
+Stable tag: 1.0.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -28,6 +28,29 @@ Project Manager Pro is perfect for freelancers, small teams, or anyone who wants
 3. You will see a new menu called **Project Manager Pro** in your WordPress admin sidebar.
 4. Start adding Projects and Tasks.
 
+== Custom Development & Feature Requests ==
+
+Need a custom feature or want to enhance Project Manager to fit your workflow?  
+I provide custom WordPress plugin development, feature requests, and tailored solutions to make your project management seamless.
+
+= Contact for Custom Development =
+🌐 Website: [https://sandalia.com.bd/apps](https://sandalia.com.bd/apps)  
+💼 Upwork: [Upwork](https://www.upwork.com/freelancers/delower)
+💼 Linkedin: [Linkedin](https://www.linkedin.com/in/delower186/)
+
+= Do You need any Data Scraping Services? Try =
+🌐 Marketplace: [SandaliaApps](https://apify.com/sandaliaapps)
+
+== Try My Other Plugins ==
+
+= [WP TO Do](https://wordpress.org/plugins/wp-todo/) =
+[WP TO Do](https://wordpress.org/plugins/wp-todo/) is a powerful WordPress plugin that allows you to create, manage, and track tasks effortlessly. It’s perfect for individuals, teams, and businesses looking to stay organized and boost productivity.
+
+= [LLMs.txt Sitemap Manager](https://wordpress.org/plugins/llms-txt-sitemap-manager/) =
+[LLMs.txt Sitemap Manager](https://wordpress.org/plugins/llms-txt-sitemap-manager/) automatically generates an **LLMs.txt file** — a structured, lightweight list of important public URLs from your site — specifically designed for **Large Language Models (LLMs)** like ChatGPT, Perplexity, Claude, and other AI systems.  
+
+
+
 == Frequently Asked Questions ==
 
 = Can I manage tasks from the frontend? =
@@ -42,6 +65,10 @@ Yes, each task can be linked to a project using the meta box in the task editor.
 3. Task editor screen with Project selection.
 
 == Changelog ==
+
+= 1.0.5 =
+* Readme.txt updated
+
 = 1.0.4 =
 * bug fixed
 * converted status & priority to custom taxonomy
