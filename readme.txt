@@ -4,7 +4,7 @@ Tags: task manager, project manager pro, wp-project-manager, productivity
 Requires at least: 6.4
 Tested up to: 6.8
 Requires PHP: 7.2.24
-Stable tag: 1.0.5
+Stable tag: 1.0.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -35,18 +35,19 @@ I provide custom WordPress plugin development, feature requests, and tailored so
 
 = Contact for Custom Development =
 🌐 Website: [https://sandalia.com.bd/apps](https://sandalia.com.bd/apps)  
-💼 Upwork: [Upwork](https://www.upwork.com/freelancers/delower)
-💼 Linkedin: [Linkedin](https://www.linkedin.com/in/delower186/)
+💼 Upwork (Delower): [https://www.upwork.com/freelancers/delower](https://www.upwork.com/freelancers/delower)
+💼 Linkedin (Delower): [https://www.linkedin.com/in/delower186/](https://www.linkedin.com/in/delower186/)
+💼 Linkedin (Sandalia): [https://www.linkedin.com/company/sandalia-apps/](https://www.linkedin.com/company/sandalia-apps/)
 
 = Do You need any Data Scraping Services? Try =
-🌐 Marketplace: [SandaliaApps](https://apify.com/sandaliaapps)
+🌐 Marketplace: [https://apify.com/sandaliaapps](https://apify.com/sandaliaapps)
 
 == Try My Other Plugins ==
 
-= [WP TO Do](https://wordpress.org/plugins/wp-todo/) =
+= WP TO Do =
 [WP TO Do](https://wordpress.org/plugins/wp-todo/) is a powerful WordPress plugin that allows you to create, manage, and track tasks effortlessly. It’s perfect for individuals, teams, and businesses looking to stay organized and boost productivity.
 
-= [LLMs.txt Sitemap Manager](https://wordpress.org/plugins/llms-txt-sitemap-manager/) =
+= LLMs.txt Sitemap Manager =
 [LLMs.txt Sitemap Manager](https://wordpress.org/plugins/llms-txt-sitemap-manager/) automatically generates an **LLMs.txt file** — a structured, lightweight list of important public URLs from your site — specifically designed for **Large Language Models (LLMs)** like ChatGPT, Perplexity, Claude, and other AI systems.  
 
 
@@ -65,6 +66,9 @@ Yes, each task can be linked to a project using the meta box in the task editor.
 3. Task editor screen with Project selection.
 
 == Changelog ==
+
+= 1.0.6 =
+* Readme.txt updated
 
 = 1.0.5 =
 * Readme.txt updated
